@@ -311,6 +311,82 @@ const blocks = await collectPaginatedAPI(notion.blocks.children.list, {
 // Do something with blocks.
 ```
 
+#### Rich Text Utilities
+
+Helper functions for working with Notion's rich text format:
+
+##### `richTextToPlainText(richText)`
+
+Converts an array of rich text items to plain text, removing all formatting.
+
+```javascript
+const page = await notion.pages.retrieve({ page_id: pageId })
+const title = richTextToPlainText(page.properties.Name.title)
+console.log(title) // "My Page Title"
+```
+
+##### `richTextToMarkdown(richText)`
+
+Converts an array of rich text items to Markdown format, preserving formatting like bold, italic, code, links, etc.
+
+```javascript
+const block = await notion.blocks.retrieve({ block_id: blockId })
+const markdown = richTextToMarkdown(block.paragraph.rich_text)
+console.log(markdown) // "**Bold** and *italic* text with `code`"
+```
+
+#### Page Property Utilities
+
+Helper functions for extracting values from page properties:
+
+##### `getPageTitle(page)`
+
+Extracts the title (page name) from a page object.
+
+```javascript
+const page = await notion.pages.retrieve({ page_id: pageId })
+const title = getPageTitle(page)
+console.log(title) // "My Page Title"
+```
+
+##### `getPageProperty(page, propertyName)`
+
+Safely extracts a property value from a page by property name. Handles all property types and returns the appropriate value type for each.
+
+```javascript
+const page = await notion.pages.retrieve({ page_id: pageId })
+const status = getPageProperty(page, "Status") // Returns: "In Progress"
+const tags = getPageProperty(page, "Tags") // Returns: ["tag1", "tag2"]
+const count = getPageProperty(page, "Count") // Returns: 42
+const done = getPageProperty(page, "Done") // Returns: true
+```
+
+#### ID Extraction and Validation
+
+Utility functions for working with Notion IDs:
+
+##### `extractNotionId(urlOrId)`
+
+Extracts a Notion UUID from a URL or validates and formats an existing ID.
+
+```javascript
+const id = extractNotionId("https://notion.so/My-Page-abc123...")
+// Returns: "abc123de-f456-7890-1234-567890abcdef"
+```
+
+##### `extractDatabaseId(databaseUrl)`, `extractPageId(pageUrl)`, `extractBlockId(urlWithBlock)`
+
+Convenience wrappers around `extractNotionId` for specific resource types.
+
+##### `isValidNotionId(id)`
+
+Validates whether a string is a valid Notion UUID format.
+
+```javascript
+isValidNotionId("12345678-1234-1234-1234-123456789abc") // true
+isValidNotionId("invalid-id") // false
+```
+
 ### Custom requests
 
 To make requests directly to a Notion API endpoint instead of using the pre-built families of methods, call the `request()` method. For example:

@@ -377,3 +377,225 @@ export function extractBlockId(urlWithBlock: string): string | null {
 
   return null
 }
+
+/**
+ * Validates if a string is a valid Notion UUID format.
+ *
+ * @param id The string to validate as a Notion ID
+ * @returns `true` if the string is a valid UUID format
+ *
+ * @example
+ * ```typescript
+ * isValidNotionId('12345678-1234-1234-1234-123456789abc') // true
+ * isValidNotionId('abc123def456789012345678901234ab') // true (compact format)
+ * isValidNotionId('invalid-id') // false
+ * ```
+ */
+export function isValidNotionId(id: string): boolean {
+  if (!id || typeof id !== "string") {
+    return false
+  }
+
+  const trimmed = id.trim()
+
+  // Check standard UUID format
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (uuidRegex.test(trimmed)) {
+    return true
+  }
+
+  // Check compact UUID format (32 chars, no hyphens)
+  const compactUuidRegex = /^[0-9a-f]{32}$/i
+  return compactUuidRegex.test(trimmed)
+}
+
+/**
+ * Converts an array of rich text items to plain text.
+ *
+ * @param richText Array of rich text items from Notion API
+ * @returns Plain text string with all formatting removed
+ *
+ * @example
+ * ```typescript
+ * const title = page.properties.Name.title
+ * const plainText = richTextToPlainText(title)
+ * console.log(plainText) // "Hello World"
+ * ```
+ */
+export function richTextToPlainText(
+  richText: RichTextItemResponse[] | undefined | null
+): string {
+  if (!richText || !Array.isArray(richText)) {
+    return ""
+  }
+
+  return richText.map(item => item.plain_text || "").join("")
+}
+
+/**
+ * Converts an array of rich text items to Markdown format.
+ *
+ * @param richText Array of rich text items from Notion API
+ * @returns Markdown-formatted string
+ *
+ * @example
+ * ```typescript
+ * const content = block.paragraph.rich_text
+ * const markdown = richTextToMarkdown(content)
+ * console.log(markdown) // "**Bold** and *italic* text"
+ * ```
+ */
+export function richTextToMarkdown(
+  richText: RichTextItemResponse[] | undefined | null
+): string {
+  if (!richText || !Array.isArray(richText)) {
+    return ""
+  }
+
+  return richText
+    .map(item => {
+      let text = item.plain_text || ""
+
+      if (item.type === "text" && item.text?.link) {
+        text = `[${text}](${item.text.link.url})`
+      } else if (item.type === "equation") {
+        text = `$${text}$`
+      } else if (item.type === "mention") {
+        text = `@${text}`
+      }
+
+      if (item.annotations) {
+        if (item.annotations.code) {
+          text = `\`${text}\``
+        }
+        if (item.annotations.bold) {
+          text = `**${text}**`
+        }
+        if (item.annotations.italic) {
+          text = `*${text}*`
+        }
+        if (item.annotations.strikethrough) {
+          text = `~~${text}~~`
+        }
+        if (item.annotations.underline) {
+          text = `<u>${text}</u>`
+        }
+      }
+
+      return text
+    })
+    .join("")
+}
+
+/**
+ * Extracts the title (page name) from a page object.
+ *
+ * @param page A full page object from Notion API
+ * @returns The page title as plain text, or empty string if not found
+ *
+ * @example
+ * ```typescript
+ * const page = await notion.pages.retrieve({ page_id: pageId })
+ * const title = getPageTitle(page)
+ * console.log(title) // "My Page Title"
+ * ```
+ */
+export function getPageTitle(
+  page: PageObjectResponse | PartialPageObjectResponse
+): string {
+  if (!isFullPage(page)) {
+    return ""
+  }
+
+  for (const property of Object.values(page.properties)) {
+    if (property.type === "title" && "title" in property) {
+      return richTextToPlainText(property.title)
+    }
+  }
+
+  return ""
+}
+
+/**
+ * Safely extracts a property value from a page object by property name.
+ *
+ * @param page A full page object from Notion API
+ * @param propertyName The name of the property to extract
+ * @returns The property value or null if not found
+ *
+ * @example
+ * ```typescript
+ * const page = await notion.pages.retrieve({ page_id: pageId })
+ * const status = getPageProperty(page, "Status")
+ * const tags = getPageProperty(page, "Tags")
+ * ```
+ */
+export function getPageProperty(
+  page: PageObjectResponse | PartialPageObjectResponse,
+  propertyName: string
+): unknown {
+  if (!isFullPage(page) || !page.properties) {
+    return null
+  }
+
+  const property = page.properties[propertyName]
+  if (!property) {
+    return null
+  }
+
+  switch (property.type) {
+    case "title":
+      return "title" in property ? richTextToPlainText(property.title) : null
+    case "rich_text":
+      return "rich_text" in property
+        ? richTextToPlainText(property.rich_text)
+        : null
+    case "number":
+      return "number" in property ? property.number : null
+    case "select":
+      return "select" in property ? property.select?.name : null
+    case "multi_select":
+      return "multi_select" in property
+        ? property.multi_select.map(item => item.name)
+        : null
+    case "date":
+      return "date" in property ? property.date : null
+    case "people":
+      return "people" in property ? property.people : null
+    case "files":
+      return "files" in property ? property.files : null
+    case "checkbox":
+      return "checkbox" in property ? property.checkbox : null
+    case "url":
+      return "url" in property ? property.url : null
+    case "email":
+      return "email" in property ? property.email : null
+    case "phone_number":
+      return "phone_number" in property ? property.phone_number : null
+    case "formula":
+      return "formula" in property ? property.formula : null
+    case "relation":
+      return "relation" in property ? property.relation : null
+    case "rollup":
+      return "rollup" in property ? property.rollup : null
+    case "created_time":
+      return "created_time" in property ? property.created_time : null
+    case "created_by":
+      return "created_by" in property ? property.created_by : null
+    case "last_edited_time":
+      return "last_edited_time" in property ? property.last_edited_time : null
+    case "last_edited_by":
+      return "last_edited_by" in property ? property.last_edited_by : null
+    case "status":
+      return "status" in property ? property.status?.name : null
+    case "unique_id":
+      return "unique_id" in property ? property.unique_id : null
+    case "verification":
+      return "verification" in property ? property.verification : null
+    case "button":
+      return "button" in property ? property.button : null
+    default:
+      return null
+  }
+}
