@@ -604,6 +604,8 @@ export function getPageProperty(
       return "button" in property ? property.button : null
     case "place":
       return "place" in property ? property.place : null
+    case "place":
+      return "place" in property ? property.place : null
     default:
       return null
   }
