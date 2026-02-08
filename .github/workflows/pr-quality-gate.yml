@@ -1,0 +1,49 @@
+name: PR Quality Gate
+
+on:
+  workflow_run:
+    workflows: ["Auto Review"]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+jobs:
+  quality-gate:
+    name: Quality Gate Status
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'pull_request'
+
+    steps:
+      - name: Update PR Status
+        # v7.0.1
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const conclusion = '${{ github.event.workflow_run.conclusion }}';
+            const state = conclusion === 'success' ? 'success' : 'failure';
+
+            // Get the PR associated with this workflow run
+            const { data: pullRequests } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: '${{ github.event.workflow_run.head_sha }}'
+            });
+
+            if (pullRequests.length === 0) {
+              console.log('No pull request found for this workflow run');
+              return;
+            }
+
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.workflow_run.head_sha }}',
+              state: state,
+              target_url: '${{ github.event.workflow_run.html_url }}',
+              description: state === 'success' ? 'Quality gate checks passed' : 'Quality gate checks failed',
+              context: 'quality-gate'
+            });

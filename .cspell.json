@@ -15,7 +15,12 @@
     "printf",
     "is_toggleable",
     "typecheck",
-    "retryable"
+    "retryable",
+    "Semgrep",
+    "Dependabot",
+    "CodeQL",
+    "SARIF",
+    "Parallelizable"
   ],
   // flagWords - list of words to be always considered incorrect
   // This is useful for offensive words and common spelling errors.

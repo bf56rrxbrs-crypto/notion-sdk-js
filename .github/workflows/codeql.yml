@@ -1,0 +1,73 @@
+name: "CodeQL Advanced Security Scanning"
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    # Run every Monday at 9:00 UTC
+    - cron: "0 9 * * 1"
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze Code Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["javascript-typescript"]
+
+    steps:
+      - name: Checkout repository
+        # v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Initialize CodeQL
+        # v3.28.0
+        uses: github/codeql-action/init@aa57802e9d9de6cfd8b617d2d2d55de2f85c3b02
+        with:
+          languages: ${{ matrix.language }}
+          # Specify additional queries for deeper analysis
+          queries: +security-and-quality
+          config: |
+            paths-ignore:
+              - node_modules
+              - build
+              - coverage
+              - test
+
+      - name: Setup Node.js
+        # v4.1.0
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Perform CodeQL Analysis
+        # v3.28.0
+        uses: github/codeql-action/analyze@aa57802e9d9de6cfd8b617d2d2d55de2f85c3b02
+        with:
+          category: "/language:${{matrix.language}}"
+          upload: true
+          output: sarif-results
+
+      - name: Upload SARIF results
+        # v3.28.0
+        uses: github/codeql-action/upload-sarif@aa57802e9d9de6cfd8b617d2d2d55de2f85c3b02
+        if: always()
+        with:
+          sarif_file: sarif-results
