@@ -351,7 +351,7 @@ console.log(title) // "My Page Title"
 
 ##### `getPageProperty(page, propertyName)`
 
-Safely extracts a property value from a page by property name. It normalizes some common property types (for example, `select` to its name and `multi_select` to an array of names) and otherwise returns the underlying property value, so the return type is `unknown | null` and you may need to inspect or narrow it yourself.
+Safely extracts a property value from a page by property name. It normalizes some common property types (for example, `select` to its name and `multi_select` to an array of names) and otherwise returns the underlying property value. In TypeScript, the exported function's static return type is `unknown | null`, so it does not provide compile-time typing for individual property types and you will need to inspect or narrow the value yourself.
 
 ```javascript
 const page = await notion.pages.retrieve({ page_id: pageId })

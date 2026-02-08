@@ -462,8 +462,8 @@ export function richTextToMarkdown(
       if (item.type === "equation") {
         return `$${text}$`
       } else if (item.type === "mention") {
-        // Don't add @ if plain_text already starts with it (which Notion does)
-        return text.startsWith("@") ? text : `@${text}`
+        // Notion API always includes @ in plain_text for mentions
+        return text
       }
 
       // Apply annotations in order: bold/italic/strikethrough/underline first, then code
