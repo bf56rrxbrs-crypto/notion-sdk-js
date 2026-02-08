@@ -379,19 +379,21 @@ export function extractBlockId(urlWithBlock: string): string | null {
 }
 
 /**
- * Validates if a string is a valid Notion UUID format.
+ * Validates if a value is a valid Notion UUID format.
  *
- * @param id The string to validate as a Notion ID
- * @returns `true` if the string is a valid UUID format
+ * @param id The value to validate as a Notion ID
+ * @returns `true` if the value is a valid UUID format
  *
  * @example
  * ```typescript
  * isValidNotionId('12345678-1234-1234-1234-123456789abc') // true
  * isValidNotionId('abc123def456789012345678901234ab') // true (compact format)
  * isValidNotionId('invalid-id') // false
+ * isValidNotionId(null) // false
+ * isValidNotionId(undefined) // false
  * ```
  */
-export function isValidNotionId(id: string): boolean {
+export function isValidNotionId(id: unknown): boolean {
   if (!id || typeof id !== "string") {
     return false
   }
@@ -460,7 +462,8 @@ export function richTextToMarkdown(
       if (item.type === "equation") {
         return `$${text}$`
       } else if (item.type === "mention") {
-        return `@${text}`
+        // Don't add @ if plain_text already starts with it (which Notion does)
+        return text.startsWith("@") ? text : `@${text}`
       }
 
       // Apply annotations in order: bold/italic/strikethrough/underline first, then code
@@ -525,6 +528,11 @@ export function getPageTitle(
 /**
  * Safely extracts a property value from a page object by property name.
  *
+ * Normalizes some common property types (e.g., `select` to its name,
+ * `multi_select` to an array of names) and returns the underlying value
+ * for others. The return type is `unknown | null`, so you may need to
+ * inspect or narrow it yourself for non-normalized types.
+ *
  * @param page A full page object from Notion API
  * @param propertyName The name of the property to extract
  * @returns The property value or null if not found
@@ -539,7 +547,7 @@ export function getPageTitle(
 export function getPageProperty(
   page: PageObjectResponse | PartialPageObjectResponse,
   propertyName: string
-): unknown {
+): unknown | null {
   if (!isFullPage(page) || !page.properties) {
     return null
   }

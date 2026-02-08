@@ -351,14 +351,14 @@ console.log(title) // "My Page Title"
 
 ##### `getPageProperty(page, propertyName)`
 
-Safely extracts a property value from a page by property name. Handles all property types and returns the appropriate value type for each.
+Safely extracts a property value from a page by property name. It normalizes some common property types (for example, `select` to its name and `multi_select` to an array of names) and otherwise returns the underlying property value, so the return type is `unknown | null` and you may need to inspect or narrow it yourself.
 
 ```javascript
 const page = await notion.pages.retrieve({ page_id: pageId })
-const status = getPageProperty(page, "Status") // Returns: "In Progress"
-const tags = getPageProperty(page, "Tags") // Returns: ["tag1", "tag2"]
-const count = getPageProperty(page, "Count") // Returns: 42
-const done = getPageProperty(page, "Done") // Returns: true
+const status = getPageProperty(page, "Status") // e.g. "In Progress"
+const tags = getPageProperty(page, "Tags") // e.g. ["tag1", "tag2"]
+const count = getPageProperty(page, "Count") // e.g. 42
+const done = getPageProperty(page, "Done") // e.g. true
 ```
 
 ##### `getPagePropertyNames(page)`

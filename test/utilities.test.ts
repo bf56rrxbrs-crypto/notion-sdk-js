@@ -34,12 +34,9 @@ describe("Utility functions", () => {
     })
 
     it("should handle edge cases", () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(isValidNotionId(null as any)).toBe(false)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(isValidNotionId(undefined as any)).toBe(false)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(isValidNotionId(123 as any)).toBe(false)
+      expect(isValidNotionId(null)).toBe(false)
+      expect(isValidNotionId(undefined)).toBe(false)
+      expect(isValidNotionId(123)).toBe(false)
     })
 
     it("should handle whitespace", () => {
@@ -324,8 +321,8 @@ describe("Utility functions", () => {
           },
         },
       ]
-      // Double @ is expected because Notion includes @ in plain_text
-      expect(richTextToMarkdown(richText)).toBe("@@John Doe")
+      // Single @ is expected; helper avoids adding an extra @
+      expect(richTextToMarkdown(richText)).toBe("@John Doe")
     })
 
     it("should handle empty array", () => {
