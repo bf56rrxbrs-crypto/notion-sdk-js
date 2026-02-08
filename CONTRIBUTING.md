@@ -23,7 +23,7 @@ We welcome contributions in the following areas:
 ✅ **Bug fixes** - Fixes for SDK functionality issues  
 ✅ **Test improvements** - Additional test coverage or test quality enhancements  
 ✅ **Examples** - New examples demonstrating SDK usage  
-✅ **Tooling improvements** - Build scripts, CI/CD enhancements  
+✅ **Tooling improvements** - Build scripts, CI/CD enhancements
 
 ⚠️ **Please note**: Most client code in `src/api-endpoints.ts` is generated programmatically from the Notion API specification. Direct changes to generated files will be overwritten. For API-related features, please open an issue first to discuss.
 
@@ -45,22 +45,26 @@ We welcome contributions in the following areas:
 ### Setup Steps
 
 1. **Fork and clone the repository**:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/notion-sdk-js.git
    cd notion-sdk-js
    ```
 
 2. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 3. **Build the project**:
+
    ```bash
    npm run build
    ```
 
 4. **Run tests**:
+
    ```bash
    npm test
    ```
@@ -75,6 +79,7 @@ We welcome contributions in the following areas:
 ### Branch Naming
 
 Use descriptive branch names:
+
 - `fix/issue-description` - for bug fixes
 - `feature/feature-name` - for new features
 - `docs/what-changed` - for documentation
@@ -83,16 +88,19 @@ Use descriptive branch names:
 ### Development Workflow
 
 1. **Create a new branch**:
+
    ```bash
    git checkout -b fix/my-bug-fix
    ```
 
 2. **Make your changes**:
+
    - Write clean, readable code
    - Follow existing patterns and conventions
    - Add tests for new functionality
 
 3. **Test your changes**:
+
    ```bash
    npm run build
    npm test
@@ -118,6 +126,7 @@ Follow conventional commit format:
 - `ci:` - CI/CD changes
 
 Example:
+
 ```
 fix: handle empty response in pagination helper
 
@@ -143,11 +152,13 @@ Before submitting, ensure:
 ### Creating the PR
 
 1. **Push your branch**:
+
    ```bash
    git push origin fix/my-bug-fix
    ```
 
 2. **Create Pull Request on GitHub**:
+
    - Go to the repository on GitHub
    - Click "New Pull Request"
    - Select your branch
@@ -164,22 +175,27 @@ Before submitting, ensure:
 
 ```markdown
 ## Description
+
 Fixes pagination issue when API returns empty result sets.
 
 ## Problem
+
 The `collectPaginatedAPI` helper throws an error when the API returns
 an empty array, causing applications to crash unnecessarily.
 
 ## Solution
+
 Added null/undefined checks before accessing response data. The helper
 now gracefully handles empty responses and returns an empty array.
 
 ## Testing
+
 - [x] Added unit test for empty response scenario
 - [x] Tested manually with live API
 - [x] All existing tests pass
 
 ## Related Issues
+
 Fixes #123
 ```
 
@@ -188,27 +204,32 @@ Fixes #123
 Every pull request automatically triggers our Auto Review system, which checks:
 
 ### 1. Code Style & Formatting
+
 - **Prettier**: Code formatting consistency
 - **ESLint**: Code quality and TypeScript rules
 - **cspell**: Spelling in code and comments
 
 **Fix locally**:
+
 ```bash
 npm run prettier  # Auto-format code
 npm run lint      # Check for issues
 ```
 
 ### 2. Security Analysis
+
 - **npm audit**: Dependency vulnerabilities
 - **Dependabot**: Automated dependency updates
 - **CodeQL**: Advanced security scanning
 
 ### 3. Build & Test
+
 - Builds on Node.js 18.x, 20.x, 22.x
 - All tests must pass
 - Coverage reports generated
 
 ### 4. Code Quality
+
 - Complexity analysis
 - Pattern detection
 - Best practice checks
@@ -222,6 +243,7 @@ When Auto Review runs:
 3. **⚠️ Warnings**: Consider addressing, but not blocking
 
 **Viewing Results**:
+
 - Check the PR comment from the Auto Review bot
 - View detailed logs in the GitHub Actions tab
 - Download report artifacts for in-depth analysis
@@ -261,7 +283,7 @@ function isValidUser(user: User): boolean {
 
 // ❌ Avoid
 function isValidUser(user: any) {
-  return user.id && user.name  // Implicit boolean coercion
+  return user.id && user.name // Implicit boolean coercion
 }
 ```
 
@@ -280,14 +302,14 @@ describe("Feature Name", () => {
   it("should handle expected case", () => {
     // Arrange
     const input = createTestData()
-    
+
     // Act
     const result = functionUnderTest(input)
-    
+
     // Assert
     expect(result).toEqual(expectedOutput)
   })
-  
+
   it("should handle edge cases", () => {
     // Test edge cases, errors, boundaries
   })

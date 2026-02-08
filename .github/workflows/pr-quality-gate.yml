@@ -17,17 +17,17 @@ jobs:
     name: Quality Gate Status
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Quality Gate Check
         id: gate
         run: |
           echo "Checking quality gate requirements..."
           echo "GATE_STATUS=pending" >> $GITHUB_ENV
-      
+
       - name: Update PR Status
         uses: actions/github-script@v7
         with:
@@ -35,7 +35,7 @@ jobs:
           script: |
             const status = process.env.GATE_STATUS || 'pending';
             const state = status === 'success' ? 'success' : 'pending';
-            
+
             await github.rest.repos.createCommitStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,

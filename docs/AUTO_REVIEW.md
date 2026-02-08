@@ -7,23 +7,27 @@ The Auto Review feature provides automated code review capabilities for pull req
 ## Features
 
 ### 1. Code Style and Formatting
+
 - **Prettier**: Checks code formatting consistency
 - **ESLint**: Enforces code quality rules and TypeScript best practices
 - **cspell**: Validates spelling in code and comments
 
 ### 2. Security Analysis
+
 - **npm audit**: Scans for known vulnerabilities in dependencies
 - **Dependabot**: Automated dependency updates and security patches
 - **CodeQL**: Advanced security vulnerability detection
 - **Semgrep**: Pattern-based security analysis (existing integration)
 
 ### 3. Build and Test
+
 - Multi-version Node.js testing (18.x, 20.x, 22.x)
 - Automated test execution with coverage reporting
 - Build verification across all supported Node versions
 - Coverage thresholds enforcement (70% minimum recommended)
 
 ### 4. Code Quality Analysis
+
 - Code complexity metrics
 - Pattern detection for common issues
 - Large file detection (files >500 lines)
@@ -34,12 +38,14 @@ The Auto Review feature provides automated code review capabilities for pull req
   - TODO/FIXME comments
 
 ### 5. Automated Reporting
+
 - Comprehensive PR comment with review summary
 - Detailed reports as workflow artifacts
 - Status badges for each check
 - Overall approval/rejection status
 
 ### 6. Improvement Suggestions
+
 - Automated suggestions for code improvements
 - Performance optimization recommendations
 - Security best practices reminders
@@ -48,6 +54,7 @@ The Auto Review feature provides automated code review capabilities for pull req
 ## Workflow Triggers
 
 The Auto Review workflow runs on:
+
 - New pull requests
 - Pull request updates (synchronize)
 - Pull request reopening
@@ -58,12 +65,14 @@ It does **not** run on draft pull requests.
 ## Quality Gates
 
 ### Blocking Conditions (PR cannot be merged if these fail):
+
 1. **Code Style Failures**: Prettier, ESLint, or cspell errors
 2. **Critical Security Vulnerabilities**: Any critical-severity CVEs in dependencies
 3. **Build Failures**: Project fails to build on any supported Node.js version
 4. **Test Failures**: Any test suite failures
 
 ### Warning Conditions (advised to fix but not blocking):
+
 1. **High-Severity Vulnerabilities**: High-severity CVEs (should be fixed)
 2. **Low Test Coverage**: Coverage below 70%
 3. **Code Quality Issues**: Large files, overuse of `any`, etc.
@@ -94,13 +103,14 @@ You can adjust quality thresholds by modifying `.github/workflows/auto-review.ym
 ```yaml
 # Example: Change coverage threshold
 if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-  echo "::warning::Code coverage ($COVERAGE%) is below 80% threshold"
+echo "::warning::Code coverage ($COVERAGE%) is below 80% threshold"
 fi
 ```
 
 ### Security Scanning
 
 Configure Dependabot in `.github/dependabot.yml`:
+
 - Update frequency
 - Dependency grouping
 - Reviewers
@@ -109,6 +119,7 @@ Configure Dependabot in `.github/dependabot.yml`:
 ### Static Analysis
 
 Adjust linting rules:
+
 - **ESLint**: `.eslintrc.js`
 - **Prettier**: `.prettierrc`
 - **cspell**: `.cspell.json`
@@ -116,35 +127,41 @@ Adjust linting rules:
 ## Workflow Jobs
 
 ### 1. code-style
+
 - Runs Prettier, ESLint, and cspell
 - Generates report artifacts
 - Blocks merge if formatting/linting fails
 
 ### 2. security-analysis
+
 - Runs npm audit
 - Checks for critical and high-severity vulnerabilities
 - Generates security report
 - Blocks merge on critical vulnerabilities
 
 ### 3. build-and-test
+
 - Tests on Node.js 18.x, 20.x, 22.x
 - Runs full test suite with coverage
 - Checks coverage thresholds
 - Blocks merge on test failures
 
 ### 4. code-quality
+
 - Analyzes code complexity
 - Detects problematic patterns
 - Generates quality reports
 - Provides recommendations (non-blocking)
 
 ### 5. review-summary
+
 - Aggregates results from all jobs
 - Posts comprehensive comment on PR
 - Updates existing comments
 - Provides overall pass/fail status
 
 ### 6. suggest-improvements
+
 - Analyzes code for improvement opportunities
 - Posts suggestions as PR comment
 - Non-blocking, advisory only
@@ -187,21 +204,25 @@ Each workflow run generates downloadable artifacts:
 ## Troubleshooting
 
 ### Auto Review Not Running
+
 - Ensure PR is not marked as draft
 - Check workflow permissions in repository settings
 - Verify GitHub Actions are enabled
 
 ### False Positives
+
 - Review the specific error message
 - Check if it's a known issue in the tool
 - Override with inline comments if necessary (e.g., `// eslint-disable-next-line`)
 
 ### Performance Issues
+
 - Workflow takes ~5-10 minutes typically
 - Parallel jobs speed up execution
 - Large PRs may take longer
 
 ### Security Alert Overload
+
 - Group related vulnerabilities
 - Prioritize critical and high-severity issues
 - Use Dependabot to automate fixes
@@ -209,17 +230,21 @@ Each workflow run generates downloadable artifacts:
 ## Integration with Other Tools
 
 ### Existing CI/CD
+
 - Auto Review runs alongside existing CI workflow
 - Does not replace manual code review
 - Complements human judgment with automation
 
 ### Semgrep Integration
+
 - Existing Semgrep workflow continues to run
 - Provides additional security pattern detection
 - Results available in Security tab
 
 ### Branch Protection
+
 Consider enabling these branch protection rules:
+
 - Require status checks to pass before merging
 - Require branches to be up to date before merging
 - Require review from code owners

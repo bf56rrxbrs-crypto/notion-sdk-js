@@ -38,7 +38,7 @@ updates:
         update-types:
           - "minor"
           - "patch"
-      
+
   # Monitor GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"

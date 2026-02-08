@@ -384,6 +384,7 @@ If you'd like to contribute a feature or fix to the SDK's core functionality, we
 However, contributions to documentation (including this README), examples, and bug reports are always welcome and greatly appreciated!
 
 When contributing:
+
 - Ensure your code passes all Auto Review checks
 - Run `npm run lint` locally before pushing
 - Add tests for new functionality
