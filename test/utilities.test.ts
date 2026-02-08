@@ -4,10 +4,14 @@ import {
   richTextToMarkdown,
   getPageTitle,
   getPageProperty,
+  getBlockPlainText,
+  getPagePropertyNames,
+  getPagePropertiesAsObject,
 } from "../src/helpers"
 import type {
   RichTextItemResponse,
   PageObjectResponse,
+  BlockObjectResponse,
 } from "../src/api-endpoints"
 
 describe("Utility functions", () => {
@@ -560,6 +564,299 @@ describe("Utility functions", () => {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(getPageProperty(partialPage as any, "Name")).toBe(null)
+    })
+  })
+
+  describe("getBlockPlainText", () => {
+    it("should extract text from paragraph block", () => {
+      const block: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "paragraph",
+        paragraph: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Block content", link: null },
+              plain_text: "Block content",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(block)).toBe("Block content")
+    })
+
+    it("should extract text from heading blocks", () => {
+      const h1Block: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "heading_1",
+        heading_1: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Heading 1", link: null },
+              plain_text: "Heading 1",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+          is_toggleable: false,
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(h1Block)).toBe("Heading 1")
+    })
+
+    it("should extract text from list item blocks", () => {
+      const listBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "bulleted_list_item",
+        bulleted_list_item: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "List item", link: null },
+              plain_text: "List item",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(listBlock)).toBe("List item")
+    })
+
+    it("should return empty string for unsupported block types", () => {
+      const imageBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "image",
+        image: {
+          type: "external",
+          external: { url: "https://example.com/image.jpg" },
+          caption: [],
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(imageBlock)).toBe("")
+    })
+
+    it("should handle partial block", () => {
+      const partialBlock = {
+        object: "block" as const,
+        id: "block-id",
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(getBlockPlainText(partialBlock as any)).toBe("")
+    })
+  })
+
+  describe("getPagePropertyNames", () => {
+    it("should return array of property names", () => {
+      const page: PageObjectResponse = {
+        object: "page",
+        id: "page-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        cover: null,
+        icon: null,
+        parent: { type: "workspace", workspace: true },
+        archived: false,
+        in_trash: false,
+        is_locked: false,
+        properties: {
+          Name: {
+            id: "title",
+            type: "title",
+            title: [],
+          },
+          Status: {
+            id: "status",
+            type: "select",
+            select: null,
+          },
+          Tags: {
+            id: "tags",
+            type: "multi_select",
+            multi_select: [],
+          },
+        },
+        url: "https://notion.so/page-id",
+        public_url: null,
+      }
+
+      const names = getPagePropertyNames(page)
+      expect(names).toContain("Name")
+      expect(names).toContain("Status")
+      expect(names).toContain("Tags")
+      expect(names).toHaveLength(3)
+    })
+
+    it("should return empty array for page without properties", () => {
+      const page: PageObjectResponse = {
+        object: "page",
+        id: "page-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        cover: null,
+        icon: null,
+        parent: { type: "workspace", workspace: true },
+        archived: false,
+        in_trash: false,
+        is_locked: false,
+        properties: {},
+        url: "https://notion.so/page-id",
+        public_url: null,
+      }
+
+      expect(getPagePropertyNames(page)).toEqual([])
+    })
+
+    it("should handle partial page", () => {
+      const partialPage = {
+        object: "page" as const,
+        id: "page-id",
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(getPagePropertyNames(partialPage as any)).toEqual([])
+    })
+  })
+
+  describe("getPagePropertiesAsObject", () => {
+    it("should convert all properties to object", () => {
+      const page: PageObjectResponse = {
+        object: "page",
+        id: "page-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        cover: null,
+        icon: null,
+        parent: { type: "workspace", workspace: true },
+        archived: false,
+        in_trash: false,
+        is_locked: false,
+        properties: {
+          Name: {
+            id: "title",
+            type: "title",
+            title: [
+              {
+                type: "text",
+                text: { content: "Test", link: null },
+                plain_text: "Test",
+                href: null,
+                annotations: {
+                  bold: false,
+                  italic: false,
+                  strikethrough: false,
+                  underline: false,
+                  code: false,
+                  color: "default",
+                },
+              },
+            ],
+          },
+          Count: {
+            id: "count",
+            type: "number",
+            number: 42,
+          },
+          Done: {
+            id: "done",
+            type: "checkbox",
+            checkbox: true,
+          },
+        },
+        url: "https://notion.so/page-id",
+        public_url: null,
+      }
+
+      const props = getPagePropertiesAsObject(page)
+      expect(props).toEqual({
+        Name: "Test",
+        Count: 42,
+        Done: true,
+      })
+    })
+
+    it("should return empty object for partial page", () => {
+      const partialPage = {
+        object: "page" as const,
+        id: "page-id",
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(getPagePropertiesAsObject(partialPage as any)).toEqual({})
     })
   })
 })

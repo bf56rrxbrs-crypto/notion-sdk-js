@@ -599,3 +599,122 @@ export function getPageProperty(
       return null
   }
 }
+
+/**
+ * Extracts plain text content from a block, handling different block types.
+ *
+ * @param block A full block object from Notion API
+ * @returns Plain text content of the block, or empty string if block has no text
+ *
+ * @example
+ * ```typescript
+ * const block = await notion.blocks.retrieve({ block_id: blockId })
+ * const text = getBlockPlainText(block)
+ * console.log(text) // "This is the block content"
+ * ```
+ */
+export function getBlockPlainText(
+  block: BlockObjectResponse | PartialBlockObjectResponse
+): string {
+  if (!isFullBlock(block)) {
+    return ""
+  }
+
+  const type = block.type
+
+  switch (type) {
+    case "paragraph":
+      return "paragraph" in block
+        ? richTextToPlainText(block.paragraph.rich_text)
+        : ""
+    case "heading_1":
+      return "heading_1" in block
+        ? richTextToPlainText(block.heading_1.rich_text)
+        : ""
+    case "heading_2":
+      return "heading_2" in block
+        ? richTextToPlainText(block.heading_2.rich_text)
+        : ""
+    case "heading_3":
+      return "heading_3" in block
+        ? richTextToPlainText(block.heading_3.rich_text)
+        : ""
+    case "bulleted_list_item":
+      return "bulleted_list_item" in block
+        ? richTextToPlainText(block.bulleted_list_item.rich_text)
+        : ""
+    case "numbered_list_item":
+      return "numbered_list_item" in block
+        ? richTextToPlainText(block.numbered_list_item.rich_text)
+        : ""
+    case "toggle":
+      return "toggle" in block
+        ? richTextToPlainText(block.toggle.rich_text)
+        : ""
+    case "to_do":
+      return "to_do" in block ? richTextToPlainText(block.to_do.rich_text) : ""
+    case "quote":
+      return "quote" in block ? richTextToPlainText(block.quote.rich_text) : ""
+    case "callout":
+      return "callout" in block
+        ? richTextToPlainText(block.callout.rich_text)
+        : ""
+    case "code":
+      return "code" in block ? richTextToPlainText(block.code.rich_text) : ""
+    default:
+      return ""
+  }
+}
+
+/**
+ * Gets all property names from a page.
+ *
+ * @param page A full page object from Notion API
+ * @returns Array of property names
+ *
+ * @example
+ * ```typescript
+ * const page = await notion.pages.retrieve({ page_id: pageId })
+ * const propertyNames = getPagePropertyNames(page)
+ * console.log(propertyNames) // ["Name", "Status", "Tags", "Created"]
+ * ```
+ */
+export function getPagePropertyNames(
+  page: PageObjectResponse | PartialPageObjectResponse
+): string[] {
+  if (!isFullPage(page) || !page.properties) {
+    return []
+  }
+
+  return Object.keys(page.properties)
+}
+
+/**
+ * Creates a plain object with all page properties as key-value pairs.
+ * Useful for logging, debugging, or converting to JSON.
+ *
+ * @param page A full page object from Notion API
+ * @returns Object with property names as keys and values extracted
+ *
+ * @example
+ * ```typescript
+ * const page = await notion.pages.retrieve({ page_id: pageId })
+ * const props = getPagePropertiesAsObject(page)
+ * console.log(props)
+ * // { Name: "My Page", Status: "Active", Count: 42, Done: true }
+ * ```
+ */
+export function getPagePropertiesAsObject(
+  page: PageObjectResponse | PartialPageObjectResponse
+): Record<string, unknown> {
+  if (!isFullPage(page) || !page.properties) {
+    return {}
+  }
+
+  const result: Record<string, unknown> = {}
+  for (const propertyName of Object.keys(page.properties)) {
+    result[propertyName] = getPageProperty(page, propertyName)
+  }
+
+  return result
+}

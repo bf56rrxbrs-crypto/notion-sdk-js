@@ -361,6 +361,39 @@ const count = getPageProperty(page, "Count") // Returns: 42
 const done = getPageProperty(page, "Done") // Returns: true
 ```
 
+##### `getPagePropertyNames(page)`
+
+Returns an array of all property names in a page.
+
+```javascript
+const page = await notion.pages.retrieve({ page_id: pageId })
+const propertyNames = getPagePropertyNames(page)
+// Returns: ["Name", "Status", "Tags", "Created"]
+```
+
+##### `getPagePropertiesAsObject(page)`
+
+Converts all page properties to a plain JavaScript object for easy access and serialization.
+
+```javascript
+const page = await notion.pages.retrieve({ page_id: pageId })
+const props = getPagePropertiesAsObject(page)
+console.log(props)
+// { Name: "My Page", Status: "Active", Count: 42, Done: true }
+```
+
+#### Block Content Utilities
+
+##### `getBlockPlainText(block)`
+
+Extracts plain text content from a block, handling different block types (paragraph, heading, list items, etc.).
+
+```javascript
+const block = await notion.blocks.retrieve({ block_id: blockId })
+const text = getBlockPlainText(block)
+console.log(text) // "This is the block content"
+```
+
 #### ID Extraction and Validation
 
 Utility functions for working with Notion IDs:

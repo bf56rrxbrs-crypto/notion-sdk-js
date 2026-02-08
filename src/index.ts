@@ -191,4 +191,7 @@ export {
   richTextToMarkdown,
   getPageTitle,
   getPageProperty,
+  getBlockPlainText,
+  getPagePropertyNames,
+  getPagePropertiesAsObject,
 } from "./helpers"
