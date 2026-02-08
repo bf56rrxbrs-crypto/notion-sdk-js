@@ -457,18 +457,14 @@ export function richTextToMarkdown(
     .map(item => {
       let text = item.plain_text || ""
 
-      if (item.type === "text" && item.text?.link) {
-        text = `[${text}](${item.text.link.url})`
-      } else if (item.type === "equation") {
-        text = `$${text}$`
+      if (item.type === "equation") {
+        return `$${text}$`
       } else if (item.type === "mention") {
-        text = `@${text}`
+        return `@${text}`
       }
 
+      // Apply annotations in order: bold/italic/strikethrough/underline first, then code
       if (item.annotations) {
-        if (item.annotations.code) {
-          text = `\`${text}\``
-        }
         if (item.annotations.bold) {
           text = `**${text}**`
         }
@@ -481,6 +477,15 @@ export function richTextToMarkdown(
         if (item.annotations.underline) {
           text = `<u>${text}</u>`
         }
+        // Code formatting should be applied last to wrap everything
+        if (item.annotations.code) {
+          text = `\`${text}\``
+        }
+      }
+
+      // Links should wrap the final formatted text
+      if (item.type === "text" && item.text?.link) {
+        text = `[${text}](${item.text.link.url})`
       }
 
       return text

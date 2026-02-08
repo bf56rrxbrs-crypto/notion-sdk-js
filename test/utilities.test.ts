@@ -311,6 +311,7 @@ describe("Utility functions", () => {
               id: "user-id",
             },
           },
+          // Notion API includes @ in plain_text for mentions
           plain_text: "@John Doe",
           href: null,
           annotations: {
@@ -323,6 +324,7 @@ describe("Utility functions", () => {
           },
         },
       ]
+      // Double @ is expected because Notion includes @ in plain_text
       expect(richTextToMarkdown(richText)).toBe("@@John Doe")
     })
 
