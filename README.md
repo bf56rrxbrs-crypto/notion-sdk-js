@@ -5,6 +5,7 @@
 **A simple and easy to use client for the [Notion API](https://developers.notion.com).**
 
 ![Build status](https://github.com/makenotion/notion-sdk-js/actions/workflows/ci.yml/badge.svg)
+![Auto Review](https://github.com/bf56rrxbrs-crypto/notion-sdk-js/actions/workflows/auto-review.yml/badge.svg)
 [![npm version](https://badge.fury.io/js/%40notionhq%2Fclient.svg)](https://www.npmjs.com/package/@notionhq/client)
 
 ## Installation
@@ -361,6 +362,19 @@ In some cases, due to backwards-incompatible changes across [Notion API versions
 
 In these cases, we recommend upgrading your Notion API version header using the `Client()` constructor across all of your requests before upgrading to a newer version of the SDK.
 
+## Auto Review Feature
+
+This repository includes an automated code review system that runs on all pull requests. The Auto Review feature:
+
+- ✅ **Code Style & Formatting**: Validates Prettier, ESLint, and spelling
+- 🔒 **Security Analysis**: Scans dependencies for vulnerabilities with npm audit, Dependabot, and CodeQL
+- 🧪 **Build & Test**: Verifies builds and runs tests across Node.js 18.x, 20.x, and 22.x
+- 📊 **Code Quality**: Analyzes complexity, patterns, and potential issues
+- 📝 **Automated Reports**: Generates detailed feedback directly in pull requests
+- 💡 **Improvement Suggestions**: Provides recommendations for code enhancements
+
+For detailed information, see [Auto Review Documentation](docs/AUTO_REVIEW.md).
+
 ## Contributing
 
 While we value open-source contributions to this SDK, most of the client code is generated programmatically from the Notion API specification. Additions made directly to `src/api-endpoints.ts` or other generated code would be overwritten upon the next release.
@@ -368,6 +382,12 @@ While we value open-source contributions to this SDK, most of the client code is
 If you'd like to contribute a feature or fix to the SDK's core functionality, we suggest opening an issue first to discuss it with us. This helps ensure your effort aligns with how the SDK is maintained.
 
 However, contributions to documentation (including this README), examples, and bug reports are always welcome and greatly appreciated!
+
+When contributing:
+- Ensure your code passes all Auto Review checks
+- Run `npm run lint` locally before pushing
+- Add tests for new functionality
+- Follow existing code patterns and conventions
 
 ## Getting help
 
