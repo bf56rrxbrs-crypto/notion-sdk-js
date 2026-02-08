@@ -295,15 +295,12 @@ export function extractNotionId(urlOrId: string): string | null {
   const trimmed = urlOrId.trim()
 
   // Check if it's already a properly formatted UUID
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (uuidRegex.test(trimmed)) {
+  if (UUID_REGEX.test(trimmed)) {
     return trimmed.toLowerCase()
   }
 
   // Check if it's a compact UUID (32 chars, no hyphens)
-  const compactUuidRegex = /^[0-9a-f]{32}$/i
-  if (compactUuidRegex.test(trimmed)) {
+  if (COMPACT_UUID_REGEX.test(trimmed)) {
     return formatUuid(trimmed)
   }
 
@@ -343,6 +340,11 @@ function formatUuid(compactId: string): string {
     16
   )}-${clean.slice(16, 20)}-${clean.slice(20, 32)}`
 }
+
+// Shared regex patterns for Notion UUID validation
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const COMPACT_UUID_REGEX = /^[0-9a-f]{32}$/i
 
 /**
  * Extracts a database ID from a Notion database URL.
@@ -400,16 +402,8 @@ export function isValidNotionId(id: unknown): boolean {
 
   const trimmed = id.trim()
 
-  // Check standard UUID format
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (uuidRegex.test(trimmed)) {
-    return true
-  }
-
-  // Check compact UUID format (32 chars, no hyphens)
-  const compactUuidRegex = /^[0-9a-f]{32}$/i
-  return compactUuidRegex.test(trimmed)
+  // Use shared regex patterns
+  return UUID_REGEX.test(trimmed) || COMPACT_UUID_REGEX.test(trimmed)
 }
 
 /**
@@ -608,6 +602,8 @@ export function getPageProperty(
       return "verification" in property ? property.verification : null
     case "button":
       return "button" in property ? property.button : null
+    case "place":
+      return "place" in property ? property.place : null
     default:
       return null
   }

@@ -549,6 +549,18 @@ describe("Utility functions", () => {
       expect(getPageProperty(page, "Website")).toBe("https://example.com")
     })
 
+    it("should extract place property", () => {
+      const page = createPage({
+        Location: {
+          id: "place",
+          type: "place",
+          place: "San Francisco, CA",
+        },
+      })
+
+      expect(getPageProperty(page, "Location")).toBe("San Francisco, CA")
+    })
+
     it("should return null for non-existent property", () => {
       const page = createPage({})
 
@@ -677,6 +689,194 @@ describe("Utility functions", () => {
       }
 
       expect(getBlockPlainText(listBlock)).toBe("List item")
+    })
+
+    it("should extract text from heading_2 block", () => {
+      const h2Block: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "heading_2",
+        heading_2: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Heading 2", link: null },
+              plain_text: "Heading 2",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+          is_toggleable: false,
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(h2Block)).toBe("Heading 2")
+    })
+
+    it("should extract text from numbered_list_item block", () => {
+      const numberedBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "numbered_list_item",
+        numbered_list_item: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Numbered item", link: null },
+              plain_text: "Numbered item",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(numberedBlock)).toBe("Numbered item")
+    })
+
+    it("should extract text from to_do block", () => {
+      const todoBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "to_do",
+        to_do: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Todo item", link: null },
+              plain_text: "Todo item",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          checked: false,
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(todoBlock)).toBe("Todo item")
+    })
+
+    it("should extract text from quote block", () => {
+      const quoteBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "quote",
+        quote: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Quote text", link: null },
+              plain_text: "Quote text",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(quoteBlock)).toBe("Quote text")
+    })
+
+    it("should extract text from code block", () => {
+      const codeBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "code",
+        code: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "console.log('hello')", link: null },
+              plain_text: "console.log('hello')",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          language: "javascript",
+          caption: [],
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(codeBlock)).toBe("console.log('hello')")
     })
 
     it("should return empty string for unsupported block types", () => {

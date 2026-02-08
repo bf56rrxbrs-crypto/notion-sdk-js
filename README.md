@@ -413,11 +413,13 @@ Convenience wrappers around `extractNotionId` for specific resource types.
 
 ##### `isValidNotionId(id)`
 
-Validates whether a string is a valid Notion UUID format.
+Checks whether a value represents a valid Notion UUID, after trimming surrounding whitespace. Supports both dashed and compact (32-character) UUID formats and safely accepts non-string inputs.
 
 ```javascript
 isValidNotionId("12345678-1234-1234-1234-123456789abc") // true
-isValidNotionId("invalid-id") // false
+isValidNotionId("12345678123412341234123456789abc") // true (compact UUID)
+isValidNotionId("  invalid-id  ") // false
+isValidNotionId(null) // false
 ```
 
 ### Custom requests
