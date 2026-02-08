@@ -269,11 +269,11 @@ The Auto Review feature is designed to evolve:
 
 ## Related Documentation
 
-- [Contributing Guidelines](CONTRIBUTING.md) - if available
-- [CI/CD Documentation](.github/workflows/ci.yml)
-- [ESLint Configuration](.eslintrc.js)
-- [Prettier Configuration](.prettierrc)
-- [TypeScript Configuration](tsconfig.json)
+- [Contributing Guidelines](../CONTRIBUTING.md)
+- [CI/CD Documentation](../.github/workflows/ci.yml)
+- [ESLint Configuration](../.eslintrc.js)
+- [Prettier Configuration](../.prettierrc)
+- [TypeScript Configuration](../tsconfig.json)
 
 ## License
 

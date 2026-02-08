@@ -449,7 +449,7 @@ permissions:
 
 ### Supply Chain Security
 
-- Actions pinned to SHA (not tags)
+- Actions pinned to specific commit SHAs (following repo convention)
 - Dependencies scanned by Dependabot
 - npm lockfile committed
 
