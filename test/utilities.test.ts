@@ -12,6 +12,8 @@ import type {
   RichTextItemResponse,
   PageObjectResponse,
   BlockObjectResponse,
+  PartialPageObjectResponse,
+  PartialBlockObjectResponse,
 } from "../src/api-endpoints"
 
 describe("Utility functions", () => {
@@ -402,19 +404,19 @@ describe("Utility functions", () => {
     })
 
     it("should handle partial page", () => {
-      const partialPage = {
-        object: "page" as const,
+      const partialPage: PartialPageObjectResponse = {
+        object: "page",
         id: "page-id",
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(getPageTitle(partialPage as any)).toBe("")
+      expect(getPageTitle(partialPage)).toBe("")
     })
   })
 
   describe("getPageProperty", () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const createPage = (properties: any): PageObjectResponse => ({
+    const createPage = (
+      properties: PageObjectResponse["properties"]
+    ): PageObjectResponse => ({
       object: "page",
       id: "page-id",
       created_time: "2023-01-01T00:00:00.000Z",
@@ -554,11 +556,87 @@ describe("Utility functions", () => {
         Location: {
           id: "place",
           type: "place",
-          place: "San Francisco, CA",
+          place: {
+            lat: 37.7749,
+            lon: -122.4194,
+            name: "San Francisco",
+            address: "San Francisco, CA",
+            aws_place_id: null,
+          },
         },
       })
 
-      expect(getPageProperty(page, "Location")).toBe("San Francisco, CA")
+      expect(getPageProperty(page, "Location")).toEqual({
+        lat: 37.7749,
+        lon: -122.4194,
+        name: "San Francisco",
+        address: "San Francisco, CA",
+        aws_place_id: null,
+      })
+    })
+
+    it("should return null for select property with null value", () => {
+      const page = createPage({
+        Status: {
+          id: "status",
+          type: "select",
+          select: null,
+        },
+      })
+
+      expect(getPageProperty(page, "Status")).toBe(null)
+    })
+
+    it("should return null for status property with null value", () => {
+      const page = createPage({
+        Status: {
+          id: "status",
+          type: "status",
+          status: null,
+        },
+      })
+
+      expect(getPageProperty(page, "Status")).toBe(null)
+    })
+
+    it("should extract email property", () => {
+      const page = createPage({
+        Email: {
+          id: "email",
+          type: "email",
+          email: "test@example.com",
+        },
+      })
+
+      expect(getPageProperty(page, "Email")).toBe("test@example.com")
+    })
+
+    it("should extract phone_number property", () => {
+      const page = createPage({
+        Phone: {
+          id: "phone",
+          type: "phone_number",
+          phone_number: "+1234567890",
+        },
+      })
+
+      expect(getPageProperty(page, "Phone")).toBe("+1234567890")
+    })
+
+    it("should extract date property", () => {
+      const page = createPage({
+        Date: {
+          id: "date",
+          type: "date",
+          date: { start: "2023-01-01", end: null, time_zone: null },
+        },
+      })
+
+      expect(getPageProperty(page, "Date")).toEqual({
+        start: "2023-01-01",
+        end: null,
+        time_zone: null,
+      })
     })
 
     it("should return null for non-existent property", () => {
@@ -568,13 +646,12 @@ describe("Utility functions", () => {
     })
 
     it("should handle partial page", () => {
-      const partialPage = {
-        object: "page" as const,
+      const partialPage: PartialPageObjectResponse = {
+        object: "page",
         id: "page-id",
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(getPageProperty(partialPage as any, "Name")).toBe(null)
+      expect(getPageProperty(partialPage, "Name")).toBe(null)
     })
   })
 
@@ -879,6 +956,119 @@ describe("Utility functions", () => {
       expect(getBlockPlainText(codeBlock)).toBe("console.log('hello')")
     })
 
+    it("should extract text from heading_3 block", () => {
+      const h3Block: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "heading_3",
+        heading_3: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Heading 3", link: null },
+              plain_text: "Heading 3",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+          is_toggleable: false,
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(h3Block)).toBe("Heading 3")
+    })
+
+    it("should extract text from toggle block", () => {
+      const toggleBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "toggle",
+        toggle: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Toggle content", link: null },
+              plain_text: "Toggle content",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(toggleBlock)).toBe("Toggle content")
+    })
+
+    it("should extract text from callout block", () => {
+      const calloutBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "callout",
+        callout: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Callout text", link: null },
+              plain_text: "Callout text",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          icon: { type: "emoji", emoji: "💡" },
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(calloutBlock)).toBe("Callout text")
+    })
+
     it("should return empty string for unsupported block types", () => {
       const imageBlock: BlockObjectResponse = {
         object: "block",
@@ -903,13 +1093,12 @@ describe("Utility functions", () => {
     })
 
     it("should handle partial block", () => {
-      const partialBlock = {
-        object: "block" as const,
+      const partialBlock: PartialBlockObjectResponse = {
+        object: "block",
         id: "block-id",
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(getBlockPlainText(partialBlock as any)).toBe("")
+      expect(getBlockPlainText(partialBlock)).toBe("")
     })
   })
 
@@ -979,13 +1168,12 @@ describe("Utility functions", () => {
     })
 
     it("should handle partial page", () => {
-      const partialPage = {
-        object: "page" as const,
+      const partialPage: PartialPageObjectResponse = {
+        object: "page",
         id: "page-id",
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(getPagePropertyNames(partialPage as any)).toEqual([])
+      expect(getPagePropertyNames(partialPage)).toEqual([])
     })
   })
 
@@ -1049,13 +1237,12 @@ describe("Utility functions", () => {
     })
 
     it("should return empty object for partial page", () => {
-      const partialPage = {
-        object: "page" as const,
+      const partialPage: PartialPageObjectResponse = {
+        object: "page",
         id: "page-id",
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(getPagePropertiesAsObject(partialPage as any)).toEqual({})
+      expect(getPagePropertiesAsObject(partialPage)).toEqual({})
     })
   })
 })

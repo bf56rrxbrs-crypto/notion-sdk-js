@@ -561,7 +561,7 @@ export function getPageProperty(
     case "number":
       return "number" in property ? property.number : null
     case "select":
-      return "select" in property ? property.select?.name : null
+      return "select" in property ? (property.select?.name ?? null) : null
     case "multi_select":
       return "multi_select" in property
         ? property.multi_select.map(item => item.name)
@@ -595,15 +595,13 @@ export function getPageProperty(
     case "last_edited_by":
       return "last_edited_by" in property ? property.last_edited_by : null
     case "status":
-      return "status" in property ? property.status?.name : null
+      return "status" in property ? (property.status?.name ?? null) : null
     case "unique_id":
       return "unique_id" in property ? property.unique_id : null
     case "verification":
       return "verification" in property ? property.verification : null
     case "button":
       return "button" in property ? property.button : null
-    case "place":
-      return "place" in property ? property.place : null
     case "place":
       return "place" in property ? property.place : null
     default:
