@@ -199,7 +199,11 @@ The SDK is configured with GitHub Actions CI that:
 - Executes: install → build → lint → test
 - Validates on push to main and all pull requests
 
-**CI Status:** ✅ Passing on all Node.js versions
+**CI Status:**
+- ✅ Core CI workflow (build, lint, primary test suite) is passing on
+  Node.js 18.x, 19.x, 20.x, and 22.x
+- ⚠️ Extended stress and security test suites currently achieve a 92%
+  pass rate (see Reliability section for details)
 
 ## Conclusions
 
