@@ -1,0 +1,1248 @@
+import {
+  isValidNotionId,
+  richTextToPlainText,
+  richTextToMarkdown,
+  getPageTitle,
+  getPageProperty,
+  getBlockPlainText,
+  getPagePropertyNames,
+  getPagePropertiesAsObject,
+} from "../src/helpers"
+import type {
+  RichTextItemResponse,
+  PageObjectResponse,
+  BlockObjectResponse,
+  PartialPageObjectResponse,
+  PartialBlockObjectResponse,
+} from "../src/api-endpoints"
+
+describe("Utility functions", () => {
+  describe("isValidNotionId", () => {
+    it("should validate standard UUID format", () => {
+      expect(isValidNotionId("12345678-1234-1234-1234-123456789abc")).toBe(true)
+      expect(isValidNotionId("a1b2c3d4-e5f6-7890-abcd-ef1234567890")).toBe(true)
+    })
+
+    it("should validate compact UUID format", () => {
+      expect(isValidNotionId("12345678123412341234123456789abc")).toBe(true)
+      expect(isValidNotionId("a1b2c3d4e5f67890abcdef1234567890")).toBe(true)
+    })
+
+    it("should reject invalid formats", () => {
+      expect(isValidNotionId("invalid-id")).toBe(false)
+      expect(isValidNotionId("12345678-1234-1234-1234")).toBe(false)
+      expect(isValidNotionId("")).toBe(false)
+      expect(isValidNotionId("not a uuid at all")).toBe(false)
+    })
+
+    it("should handle edge cases", () => {
+      expect(isValidNotionId(null)).toBe(false)
+      expect(isValidNotionId(undefined)).toBe(false)
+      expect(isValidNotionId(123)).toBe(false)
+    })
+
+    it("should handle whitespace", () => {
+      expect(isValidNotionId("  12345678-1234-1234-1234-123456789abc  ")).toBe(
+        true
+      )
+    })
+  })
+
+  describe("richTextToPlainText", () => {
+    it("should convert simple text", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "text",
+          text: { content: "Hello World", link: null },
+          plain_text: "Hello World",
+          href: null,
+          annotations: {
+            bold: false,
+            italic: false,
+            strikethrough: false,
+            underline: false,
+            code: false,
+            color: "default",
+          },
+        },
+      ]
+      expect(richTextToPlainText(richText)).toBe("Hello World")
+    })
+
+    it("should handle multiple text items", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "text",
+          text: { content: "Hello ", link: null },
+          plain_text: "Hello ",
+          href: null,
+          annotations: {
+            bold: false,
+            italic: false,
+            strikethrough: false,
+            underline: false,
+            code: false,
+            color: "default",
+          },
+        },
+        {
+          type: "text",
+          text: { content: "World", link: null },
+          plain_text: "World",
+          href: null,
+          annotations: {
+            bold: true,
+            italic: false,
+            strikethrough: false,
+            underline: false,
+            code: false,
+            color: "default",
+          },
+        },
+      ]
+      expect(richTextToPlainText(richText)).toBe("Hello World")
+    })
+
+    it("should handle empty array", () => {
+      expect(richTextToPlainText([])).toBe("")
+    })
+
+    it("should handle null/undefined", () => {
+      expect(richTextToPlainText(null)).toBe("")
+      expect(richTextToPlainText(undefined)).toBe("")
+    })
+
+    it("should handle equation type", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "equation",
+          equation: { expression: "E=mc^2" },
+          plain_text: "E=mc^2",
+          href: null,
+          annotations: {
+            bold: false,
+            italic: false,
+            strikethrough: false,
+            underline: false,
+            code: false,
+            color: "default",
+          },
+        },
+      ]
+      expect(richTextToPlainText(richText)).toBe("E=mc^2")
+    })
+  })
+
+  describe("richTextToMarkdown", () => {
+    it("should convert text with bold formatting", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "text",
+          text: { content: "Bold text", link: null },
+          plain_text: "Bold text",
+          href: null,
+          annotations: {
+            bold: true,
+            italic: false,
+            strikethrough: false,
+            underline: false,
+            code: false,
+            color: "default",
+          },
+        },
+      ]
+      expect(richTextToMarkdown(richText)).toBe("**Bold text**")
+    })
+
+    it("should convert text with italic formatting", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "text",
+          text: { content: "Italic text", link: null },
+          plain_text: "Italic text",
+          href: null,
+          annotations: {
+            bold: false,
+            italic: true,
+            strikethrough: false,
+            underline: false,
+            code: false,
+            color: "default",
+          },
+        },
+      ]
+      expect(richTextToMarkdown(richText)).toBe("*Italic text*")
+    })
+
+    it("should convert text with code formatting", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "text",
+          text: { content: "code", link: null },
+          plain_text: "code",
+          href: null,
+          annotations: {
+            bold: false,
+            italic: false,
+            strikethrough: false,
+            underline: false,
+            code: true,
+            color: "default",
+          },
+        },
+      ]
+      expect(richTextToMarkdown(richText)).toBe("`code`")
+    })
+
+    it("should convert text with strikethrough formatting", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "text",
+          text: { content: "strikethrough", link: null },
+          plain_text: "strikethrough",
+          href: null,
+          annotations: {
+            bold: false,
+            italic: false,
+            strikethrough: true,
+            underline: false,
+            code: false,
+            color: "default",
+          },
+        },
+      ]
+      expect(richTextToMarkdown(richText)).toBe("~~strikethrough~~")
+    })
+
+    it("should convert text with underline formatting", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "text",
+          text: { content: "underline", link: null },
+          plain_text: "underline",
+          href: null,
+          annotations: {
+            bold: false,
+            italic: false,
+            strikethrough: false,
+            underline: true,
+            code: false,
+            color: "default",
+          },
+        },
+      ]
+      expect(richTextToMarkdown(richText)).toBe("<u>underline</u>")
+    })
+
+    it("should convert links", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "text",
+          text: {
+            content: "Click here",
+            link: { url: "https://example.com" },
+          },
+          plain_text: "Click here",
+          href: "https://example.com",
+          annotations: {
+            bold: false,
+            italic: false,
+            strikethrough: false,
+            underline: false,
+            code: false,
+            color: "default",
+          },
+        },
+      ]
+      expect(richTextToMarkdown(richText)).toBe(
+        "[Click here](https://example.com)"
+      )
+    })
+
+    it("should handle combined formatting", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "text",
+          text: { content: "Bold and italic", link: null },
+          plain_text: "Bold and italic",
+          href: null,
+          annotations: {
+            bold: true,
+            italic: true,
+            strikethrough: false,
+            underline: false,
+            code: false,
+            color: "default",
+          },
+        },
+      ]
+      expect(richTextToMarkdown(richText)).toBe("***Bold and italic***")
+    })
+
+    it("should handle equation type", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "equation",
+          equation: { expression: "E=mc^2" },
+          plain_text: "E=mc^2",
+          href: null,
+          annotations: {
+            bold: false,
+            italic: false,
+            strikethrough: false,
+            underline: false,
+            code: false,
+            color: "default",
+          },
+        },
+      ]
+      expect(richTextToMarkdown(richText)).toBe("$E=mc^2$")
+    })
+
+    it("should handle mention type", () => {
+      const richText: RichTextItemResponse[] = [
+        {
+          type: "mention",
+          mention: {
+            type: "user",
+            user: {
+              object: "user",
+              id: "user-id",
+            },
+          },
+          // Notion API includes @ in plain_text for mentions
+          plain_text: "@John Doe",
+          href: null,
+          annotations: {
+            bold: false,
+            italic: false,
+            strikethrough: false,
+            underline: false,
+            code: false,
+            color: "default",
+          },
+        },
+      ]
+      // Single @ is expected; helper avoids adding an extra @
+      expect(richTextToMarkdown(richText)).toBe("@John Doe")
+    })
+
+    it("should handle empty array", () => {
+      expect(richTextToMarkdown([])).toBe("")
+    })
+
+    it("should handle null/undefined", () => {
+      expect(richTextToMarkdown(null)).toBe("")
+      expect(richTextToMarkdown(undefined)).toBe("")
+    })
+  })
+
+  describe("getPageTitle", () => {
+    it("should extract title from page", () => {
+      const page: PageObjectResponse = {
+        object: "page",
+        id: "page-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        cover: null,
+        icon: null,
+        parent: { type: "workspace", workspace: true },
+        archived: false,
+        in_trash: false,
+        is_locked: false,
+        properties: {
+          title: {
+            id: "title",
+            type: "title",
+            title: [
+              {
+                type: "text",
+                text: { content: "My Page Title", link: null },
+                plain_text: "My Page Title",
+                href: null,
+                annotations: {
+                  bold: false,
+                  italic: false,
+                  strikethrough: false,
+                  underline: false,
+                  code: false,
+                  color: "default",
+                },
+              },
+            ],
+          },
+        },
+        url: "https://notion.so/page-id",
+        public_url: null,
+      }
+
+      expect(getPageTitle(page)).toBe("My Page Title")
+    })
+
+    it("should handle page without title", () => {
+      const page: PageObjectResponse = {
+        object: "page",
+        id: "page-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        cover: null,
+        icon: null,
+        parent: { type: "workspace", workspace: true },
+        archived: false,
+        in_trash: false,
+        is_locked: false,
+        properties: {},
+        url: "https://notion.so/page-id",
+        public_url: null,
+      }
+
+      expect(getPageTitle(page)).toBe("")
+    })
+
+    it("should handle partial page", () => {
+      const partialPage: PartialPageObjectResponse = {
+        object: "page",
+        id: "page-id",
+      }
+
+      expect(getPageTitle(partialPage)).toBe("")
+    })
+  })
+
+  describe("getPageProperty", () => {
+    const createPage = (
+      properties: PageObjectResponse["properties"]
+    ): PageObjectResponse => ({
+      object: "page",
+      id: "page-id",
+      created_time: "2023-01-01T00:00:00.000Z",
+      last_edited_time: "2023-01-01T00:00:00.000Z",
+      created_by: { object: "user", id: "user-id" },
+      last_edited_by: { object: "user", id: "user-id" },
+      cover: null,
+      icon: null,
+      parent: { type: "workspace", workspace: true },
+      archived: false,
+      in_trash: false,
+      is_locked: false,
+      properties,
+      url: "https://notion.so/page-id",
+      public_url: null,
+    })
+
+    it("should extract title property", () => {
+      const page = createPage({
+        Name: {
+          id: "title",
+          type: "title",
+          title: [
+            {
+              type: "text",
+              text: { content: "Test Title", link: null },
+              plain_text: "Test Title",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+        },
+      })
+
+      expect(getPageProperty(page, "Name")).toBe("Test Title")
+    })
+
+    it("should extract rich_text property", () => {
+      const page = createPage({
+        Description: {
+          id: "desc",
+          type: "rich_text",
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Some description", link: null },
+              plain_text: "Some description",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+        },
+      })
+
+      expect(getPageProperty(page, "Description")).toBe("Some description")
+    })
+
+    it("should extract number property", () => {
+      const page = createPage({
+        Count: {
+          id: "count",
+          type: "number",
+          number: 42,
+        },
+      })
+
+      expect(getPageProperty(page, "Count")).toBe(42)
+    })
+
+    it("should extract select property", () => {
+      const page = createPage({
+        Status: {
+          id: "status",
+          type: "select",
+          select: { id: "1", name: "Active", color: "green" },
+        },
+      })
+
+      expect(getPageProperty(page, "Status")).toBe("Active")
+    })
+
+    it("should extract multi_select property", () => {
+      const page = createPage({
+        Tags: {
+          id: "tags",
+          type: "multi_select",
+          multi_select: [
+            { id: "1", name: "Tag1", color: "blue" },
+            { id: "2", name: "Tag2", color: "red" },
+          ],
+        },
+      })
+
+      expect(getPageProperty(page, "Tags")).toEqual(["Tag1", "Tag2"])
+    })
+
+    it("should extract checkbox property", () => {
+      const page = createPage({
+        Done: {
+          id: "done",
+          type: "checkbox",
+          checkbox: true,
+        },
+      })
+
+      expect(getPageProperty(page, "Done")).toBe(true)
+    })
+
+    it("should extract url property", () => {
+      const page = createPage({
+        Website: {
+          id: "url",
+          type: "url",
+          url: "https://example.com",
+        },
+      })
+
+      expect(getPageProperty(page, "Website")).toBe("https://example.com")
+    })
+
+    it("should extract place property", () => {
+      const page = createPage({
+        Location: {
+          id: "place",
+          type: "place",
+          place: {
+            lat: 37.7749,
+            lon: -122.4194,
+            name: "San Francisco",
+            address: "San Francisco, CA",
+            aws_place_id: null,
+          },
+        },
+      })
+
+      expect(getPageProperty(page, "Location")).toEqual({
+        lat: 37.7749,
+        lon: -122.4194,
+        name: "San Francisco",
+        address: "San Francisco, CA",
+        aws_place_id: null,
+      })
+    })
+
+    it("should return null for select property with null value", () => {
+      const page = createPage({
+        Status: {
+          id: "status",
+          type: "select",
+          select: null,
+        },
+      })
+
+      expect(getPageProperty(page, "Status")).toBe(null)
+    })
+
+    it("should return null for status property with null value", () => {
+      const page = createPage({
+        Status: {
+          id: "status",
+          type: "status",
+          status: null,
+        },
+      })
+
+      expect(getPageProperty(page, "Status")).toBe(null)
+    })
+
+    it("should extract email property", () => {
+      const page = createPage({
+        Email: {
+          id: "email",
+          type: "email",
+          email: "test@example.com",
+        },
+      })
+
+      expect(getPageProperty(page, "Email")).toBe("test@example.com")
+    })
+
+    it("should extract phone_number property", () => {
+      const page = createPage({
+        Phone: {
+          id: "phone",
+          type: "phone_number",
+          phone_number: "+1234567890",
+        },
+      })
+
+      expect(getPageProperty(page, "Phone")).toBe("+1234567890")
+    })
+
+    it("should extract date property", () => {
+      const page = createPage({
+        Date: {
+          id: "date",
+          type: "date",
+          date: { start: "2023-01-01", end: null, time_zone: null },
+        },
+      })
+
+      expect(getPageProperty(page, "Date")).toEqual({
+        start: "2023-01-01",
+        end: null,
+        time_zone: null,
+      })
+    })
+
+    it("should return null for non-existent property", () => {
+      const page = createPage({})
+
+      expect(getPageProperty(page, "NonExistent")).toBe(null)
+    })
+
+    it("should handle partial page", () => {
+      const partialPage: PartialPageObjectResponse = {
+        object: "page",
+        id: "page-id",
+      }
+
+      expect(getPageProperty(partialPage, "Name")).toBe(null)
+    })
+  })
+
+  describe("getBlockPlainText", () => {
+    it("should extract text from paragraph block", () => {
+      const block: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "paragraph",
+        paragraph: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Block content", link: null },
+              plain_text: "Block content",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(block)).toBe("Block content")
+    })
+
+    it("should extract text from heading blocks", () => {
+      const h1Block: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "heading_1",
+        heading_1: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Heading 1", link: null },
+              plain_text: "Heading 1",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+          is_toggleable: false,
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(h1Block)).toBe("Heading 1")
+    })
+
+    it("should extract text from list item blocks", () => {
+      const listBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "bulleted_list_item",
+        bulleted_list_item: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "List item", link: null },
+              plain_text: "List item",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(listBlock)).toBe("List item")
+    })
+
+    it("should extract text from heading_2 block", () => {
+      const h2Block: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "heading_2",
+        heading_2: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Heading 2", link: null },
+              plain_text: "Heading 2",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+          is_toggleable: false,
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(h2Block)).toBe("Heading 2")
+    })
+
+    it("should extract text from numbered_list_item block", () => {
+      const numberedBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "numbered_list_item",
+        numbered_list_item: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Numbered item", link: null },
+              plain_text: "Numbered item",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(numberedBlock)).toBe("Numbered item")
+    })
+
+    it("should extract text from to_do block", () => {
+      const todoBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "to_do",
+        to_do: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Todo item", link: null },
+              plain_text: "Todo item",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          checked: false,
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(todoBlock)).toBe("Todo item")
+    })
+
+    it("should extract text from quote block", () => {
+      const quoteBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "quote",
+        quote: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Quote text", link: null },
+              plain_text: "Quote text",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(quoteBlock)).toBe("Quote text")
+    })
+
+    it("should extract text from code block", () => {
+      const codeBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "code",
+        code: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "console.log('hello')", link: null },
+              plain_text: "console.log('hello')",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          language: "javascript",
+          caption: [],
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(codeBlock)).toBe("console.log('hello')")
+    })
+
+    it("should extract text from heading_3 block", () => {
+      const h3Block: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "heading_3",
+        heading_3: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Heading 3", link: null },
+              plain_text: "Heading 3",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+          is_toggleable: false,
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(h3Block)).toBe("Heading 3")
+    })
+
+    it("should extract text from toggle block", () => {
+      const toggleBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "toggle",
+        toggle: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Toggle content", link: null },
+              plain_text: "Toggle content",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(toggleBlock)).toBe("Toggle content")
+    })
+
+    it("should extract text from callout block", () => {
+      const calloutBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "callout",
+        callout: {
+          rich_text: [
+            {
+              type: "text",
+              text: { content: "Callout text", link: null },
+              plain_text: "Callout text",
+              href: null,
+              annotations: {
+                bold: false,
+                italic: false,
+                strikethrough: false,
+                underline: false,
+                code: false,
+                color: "default",
+              },
+            },
+          ],
+          icon: { type: "emoji", emoji: "💡" },
+          color: "default",
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(calloutBlock)).toBe("Callout text")
+    })
+
+    it("should return empty string for unsupported block types", () => {
+      const imageBlock: BlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        has_children: false,
+        archived: false,
+        in_trash: false,
+        type: "image",
+        image: {
+          type: "external",
+          external: { url: "https://example.com/image.jpg" },
+          caption: [],
+        },
+        parent: { type: "page_id", page_id: "page-id" },
+      }
+
+      expect(getBlockPlainText(imageBlock)).toBe("")
+    })
+
+    it("should handle partial block", () => {
+      const partialBlock: PartialBlockObjectResponse = {
+        object: "block",
+        id: "block-id",
+      }
+
+      expect(getBlockPlainText(partialBlock)).toBe("")
+    })
+  })
+
+  describe("getPagePropertyNames", () => {
+    it("should return array of property names", () => {
+      const page: PageObjectResponse = {
+        object: "page",
+        id: "page-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        cover: null,
+        icon: null,
+        parent: { type: "workspace", workspace: true },
+        archived: false,
+        in_trash: false,
+        is_locked: false,
+        properties: {
+          Name: {
+            id: "title",
+            type: "title",
+            title: [],
+          },
+          Status: {
+            id: "status",
+            type: "select",
+            select: null,
+          },
+          Tags: {
+            id: "tags",
+            type: "multi_select",
+            multi_select: [],
+          },
+        },
+        url: "https://notion.so/page-id",
+        public_url: null,
+      }
+
+      const names = getPagePropertyNames(page)
+      expect(names).toContain("Name")
+      expect(names).toContain("Status")
+      expect(names).toContain("Tags")
+      expect(names).toHaveLength(3)
+    })
+
+    it("should return empty array for page without properties", () => {
+      const page: PageObjectResponse = {
+        object: "page",
+        id: "page-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        cover: null,
+        icon: null,
+        parent: { type: "workspace", workspace: true },
+        archived: false,
+        in_trash: false,
+        is_locked: false,
+        properties: {},
+        url: "https://notion.so/page-id",
+        public_url: null,
+      }
+
+      expect(getPagePropertyNames(page)).toEqual([])
+    })
+
+    it("should handle partial page", () => {
+      const partialPage: PartialPageObjectResponse = {
+        object: "page",
+        id: "page-id",
+      }
+
+      expect(getPagePropertyNames(partialPage)).toEqual([])
+    })
+  })
+
+  describe("getPagePropertiesAsObject", () => {
+    it("should convert all properties to object", () => {
+      const page: PageObjectResponse = {
+        object: "page",
+        id: "page-id",
+        created_time: "2023-01-01T00:00:00.000Z",
+        last_edited_time: "2023-01-01T00:00:00.000Z",
+        created_by: { object: "user", id: "user-id" },
+        last_edited_by: { object: "user", id: "user-id" },
+        cover: null,
+        icon: null,
+        parent: { type: "workspace", workspace: true },
+        archived: false,
+        in_trash: false,
+        is_locked: false,
+        properties: {
+          Name: {
+            id: "title",
+            type: "title",
+            title: [
+              {
+                type: "text",
+                text: { content: "Test", link: null },
+                plain_text: "Test",
+                href: null,
+                annotations: {
+                  bold: false,
+                  italic: false,
+                  strikethrough: false,
+                  underline: false,
+                  code: false,
+                  color: "default",
+                },
+              },
+            ],
+          },
+          Count: {
+            id: "count",
+            type: "number",
+            number: 42,
+          },
+          Done: {
+            id: "done",
+            type: "checkbox",
+            checkbox: true,
+          },
+        },
+        url: "https://notion.so/page-id",
+        public_url: null,
+      }
+
+      const props = getPagePropertiesAsObject(page)
+      expect(props).toEqual({
+        Name: "Test",
+        Count: 42,
+        Done: true,
+      })
+    })
+
+    it("should return empty object for partial page", () => {
+      const partialPage: PartialPageObjectResponse = {
+        object: "page",
+        id: "page-id",
+      }
+
+      expect(getPagePropertiesAsObject(partialPage)).toEqual({})
+    })
+  })
+})

@@ -186,4 +186,12 @@ export {
   extractDatabaseId,
   extractPageId,
   extractBlockId,
+  isValidNotionId,
+  richTextToPlainText,
+  richTextToMarkdown,
+  getPageTitle,
+  getPageProperty,
+  getBlockPlainText,
+  getPagePropertyNames,
+  getPagePropertiesAsObject,
 } from "./helpers"

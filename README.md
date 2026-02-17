@@ -312,6 +312,117 @@ const blocks = await collectPaginatedAPI(notion.blocks.children.list, {
 // Do something with blocks.
 ```
 
+#### Rich Text Utilities
+
+Helper functions for working with Notion's rich text format:
+
+##### `richTextToPlainText(richText)`
+
+Converts an array of rich text items to plain text, removing all formatting.
+
+```javascript
+const page = await notion.pages.retrieve({ page_id: pageId })
+const title = richTextToPlainText(page.properties.Name.title)
+console.log(title) // "My Page Title"
+```
+
+##### `richTextToMarkdown(richText)`
+
+Converts an array of rich text items to Markdown format, preserving formatting like bold, italic, code, links, etc.
+
+```javascript
+const block = await notion.blocks.retrieve({ block_id: blockId })
+const markdown = richTextToMarkdown(block.paragraph.rich_text)
+console.log(markdown) // "**Bold** and *italic* text with `code`"
+```
+
+#### Page Property Utilities
+
+Helper functions for extracting values from page properties:
+
+##### `getPageTitle(page)`
+
+Extracts the title (page name) from a page object.
+
+```javascript
+const page = await notion.pages.retrieve({ page_id: pageId })
+const title = getPageTitle(page)
+console.log(title) // "My Page Title"
+```
+
+##### `getPageProperty(page, propertyName)`
+
+Safely extracts a property value from a page by property name. It normalizes some common property types (for example, `select` to its name and `multi_select` to an array of names) and otherwise returns the underlying property value. In TypeScript, the exported function's static return type is `unknown | null`, so it does not provide compile-time typing for individual property types and you will need to inspect or narrow the value yourself.
+
+```javascript
+const page = await notion.pages.retrieve({ page_id: pageId })
+const status = getPageProperty(page, "Status") // e.g. "In Progress"
+const tags = getPageProperty(page, "Tags") // e.g. ["tag1", "tag2"]
+const count = getPageProperty(page, "Count") // e.g. 42
+const done = getPageProperty(page, "Done") // e.g. true
+```
+
+##### `getPagePropertyNames(page)`
+
+Returns an array of all property names in a page.
+
+```javascript
+const page = await notion.pages.retrieve({ page_id: pageId })
+const propertyNames = getPagePropertyNames(page)
+// Returns: ["Name", "Status", "Tags", "Created"]
+```
+
+##### `getPagePropertiesAsObject(page)`
+
+Converts all page properties to a plain JavaScript object for easy access and serialization.
+
+```javascript
+const page = await notion.pages.retrieve({ page_id: pageId })
+const props = getPagePropertiesAsObject(page)
+console.log(props)
+// { Name: "My Page", Status: "Active", Count: 42, Done: true }
+```
+
+#### Block Content Utilities
+
+##### `getBlockPlainText(block)`
+
+Extracts plain text content from a block, handling different block types (paragraph, heading, list items, etc.).
+
+```javascript
+const block = await notion.blocks.retrieve({ block_id: blockId })
+const text = getBlockPlainText(block)
+console.log(text) // "This is the block content"
+```
+
+#### ID Extraction and Validation
+
+Utility functions for working with Notion IDs:
+
+##### `extractNotionId(urlOrId)`
+
+Extracts a Notion UUID from a URL or validates and formats an existing ID.
+
+```javascript
+const id = extractNotionId("https://notion.so/My-Page-abc123...")
+// Returns: "abc123de-f456-7890-1234-567890abcdef"
+```
+
+##### `extractDatabaseId(databaseUrl)`, `extractPageId(pageUrl)`, `extractBlockId(urlWithBlock)`
+
+Convenience wrappers around `extractNotionId` for specific resource types.
+
+##### `isValidNotionId(id)`
+
+Checks whether a value represents a valid Notion UUID, after trimming surrounding whitespace. Supports both dashed and compact (32-character) UUID formats and safely accepts non-string inputs.
+
+```javascript
+isValidNotionId("12345678-1234-1234-1234-123456789abc") // true
+isValidNotionId("12345678123412341234123456789abc") // true (compact UUID)
+isValidNotionId("  invalid-id  ") // false
+isValidNotionId(null) // false
+```
+
 ### Custom requests
 
 To make requests directly to a Notion API endpoint instead of using the pre-built families of methods, call the `request()` method. For example:
