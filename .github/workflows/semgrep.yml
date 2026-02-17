@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 480
     steps:
       # v5.0.0
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       - run: semgrep ci
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP }}
