@@ -56,7 +56,7 @@ jobs:
 
       - name: Upload reports
         # v4.5.0
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
           name: code-style-reports
@@ -119,7 +119,7 @@ jobs:
 
       - name: Upload security reports
         # v4.5.0
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
           name: security-reports
@@ -168,7 +168,7 @@ jobs:
 
       - name: Upload coverage report
         # v4.5.0
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: matrix.node-version == '20.x'
         with:
           name: coverage-report
@@ -266,7 +266,7 @@ jobs:
 
       - name: Upload quality reports
         # v4.5.0
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
           name: quality-reports
