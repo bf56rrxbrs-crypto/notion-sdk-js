@@ -2,9 +2,12 @@
   "name": "@notionhq/client",
   "version": "5.9.0",
   "description": "A simple and easy to use client for the Notion API",
-  "engines": {
-    "node": ">=18"
-  },
+  "keywords": [
+    "notion",
+    "notionapi",
+    "rest",
+    "notion-api"
+  ],
   "homepage": "https://developers.notion.com/docs/getting-started",
   "bugs": {
     "url": "https://github.com/makenotion/notion-sdk-js/issues"
@@ -13,38 +16,33 @@
     "type": "git",
     "url": "https://github.com/makenotion/notion-sdk-js/"
   },
-  "keywords": [
-    "notion",
-    "notionapi",
-    "rest",
-    "notion-api"
-  ],
+  "license": "MIT",
+  "author": "",
   "main": "./build/src",
   "types": "./build/src/index.d.ts",
+  "files": [
+    "build/package.json",
+    "build/src/**"
+  ],
   "scripts": {
+    "prebuild": "npm run clean",
+    "build": "tsc",
+    "check-links": "git ls-files | grep md$ | xargs -n 1 markdown-link-check",
+    "checkLoggedIn": "./scripts/verifyLoggedIn.sh",
+    "clean": "rm -rf ./build",
+    "lint": "prettier --check . && eslint . --ext .ts && cspell '**/*' ",
     "prepare": "husky && npm run build",
     "prepublishOnly": "npm run checkLoggedIn && npm run lint && npm run test",
-    "build": "tsc",
     "prettier": "prettier --write .",
-    "lint": "prettier --check . && eslint . --ext .ts && cspell '**/*' ",
-    "test": "jest ./test",
-    "check-links": "git ls-files | grep md$ | xargs -n 1 markdown-link-check",
-    "prebuild": "npm run clean",
-    "clean": "rm -rf ./build",
-    "checkLoggedIn": "./scripts/verifyLoggedIn.sh"
+    "test": "jest ./test"
   },
   "lint-staged": {
     "*.{ts,js,json,md}": "prettier --write",
     "*.ts": "eslint --fix"
   },
-  "author": "",
-  "license": "MIT",
-  "files": [
-    "build/package.json",
-    "build/src/**"
-  ],
   "devDependencies": {
     "@types/jest": "29.5.14",
+    "@types/node": "^22.13.1",
     "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "7.18.0",
     "cspell": "8.17.1",
@@ -56,5 +54,8 @@
     "prettier": "3.3.3",
     "ts-jest": "29.2.5",
     "typescript": "5.9.2"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
