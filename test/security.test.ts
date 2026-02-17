@@ -15,16 +15,18 @@ import {
 describe("Security Tests", () => {
   describe("Authentication Error Handling", () => {
     test("should handle unauthorized errors", async () => {
+      const errorBody = {
+        object: "error",
+        status: 401,
+        code: "unauthorized",
+        message: "Unauthorized",
+      }
       const mockFetch = jest.fn(async () => ({
         ok: false,
         status: 401,
         headers: new Map([["content-type", "application/json"]]),
-        json: async () => ({
-          object: "error",
-          status: 401,
-          code: "unauthorized",
-          message: "Unauthorized",
-        }),
+        json: async () => errorBody,
+        text: async () => JSON.stringify(errorBody),
       })) as unknown as typeof fetch
 
       const client = new Client({
@@ -46,16 +48,18 @@ describe("Security Tests", () => {
     })
 
     test("should handle missing authentication", async () => {
+      const errorBody = {
+        object: "error",
+        status: 401,
+        code: "unauthorized",
+        message: "The API token is invalid.",
+      }
       const mockFetch = jest.fn(async () => ({
         ok: false,
         status: 401,
         headers: new Map([["content-type", "application/json"]]),
-        json: async () => ({
-          object: "error",
-          status: 401,
-          code: "unauthorized",
-          message: "The API token is invalid.",
-        }),
+        json: async () => errorBody,
+        text: async () => JSON.stringify(errorBody),
       })) as unknown as typeof fetch
 
       const client = new Client({
@@ -73,7 +77,7 @@ describe("Security Tests", () => {
       expect(extractNotionId(validId)).toBe(validId)
 
       const invalidId = "invalid-id"
-      expect(extractNotionId(invalidId)).toBe(invalidId)
+      expect(extractNotionId(invalidId)).toBeNull()
 
       const emptyId = ""
       expect(extractNotionId(emptyId)).toBeNull()
@@ -81,7 +85,7 @@ describe("Security Tests", () => {
 
     test("should handle malformed IDs safely", () => {
       expect(() => extractNotionId("not-a-valid-id")).not.toThrow()
-      expect(extractNotionId("not-a-valid-id")).toBe("not-a-valid-id")
+      expect(extractNotionId("not-a-valid-id")).toBeNull()
     })
 
     test("should sanitize special characters in IDs", () => {
@@ -143,18 +147,19 @@ describe("Security Tests", () => {
   describe("Sensitive Data Handling", () => {
     test("should not expose auth token in error messages", async () => {
       const sensitiveToken = "secret_1234567890abcdef"
+      const errorBody = {
+        object: "error",
+        status: 401,
+        code: APIErrorCode.Unauthorized,
+        message: "Unauthorized",
+      }
       const mockFetch = jest.fn(
         async () =>
           ({
             ok: false,
             status: 401,
             headers: new Map([["content-type", "application/json"]]),
-            json: async () => ({
-              object: "error",
-              status: 401,
-              code: APIErrorCode.Unauthorized,
-              message: "Unauthorized",
-            }),
+            json: async () => errorBody,
             statusText: "Unauthorized",
             type: "default",
             url: "",
@@ -164,7 +169,7 @@ describe("Security Tests", () => {
             arrayBuffer: async () => new ArrayBuffer(0),
             blob: async () => new Blob(),
             formData: async () => new FormData(),
-            text: async () => "",
+            text: async () => JSON.stringify(errorBody),
             clone: function () {
               return this
             },
@@ -203,6 +208,12 @@ describe("Security Tests", () => {
   describe("Rate Limiting Security", () => {
     test("should respect rate limit headers", async () => {
       let callCount = 0
+      const errorBody = {
+        object: "error",
+        status: 429,
+        code: APIErrorCode.RateLimited,
+        message: "Rate limited",
+      }
       const mockFetch = jest.fn(async () => {
         callCount++
         return {
@@ -214,12 +225,7 @@ describe("Security Tests", () => {
             ["x-rate-limit-limit", "3"],
             ["x-rate-limit-remaining", "0"],
           ]),
-          json: async () => ({
-            object: "error",
-            status: 429,
-            code: APIErrorCode.RateLimited,
-            message: "Rate limited",
-          }),
+          json: async () => errorBody,
           statusText: "Too Many Requests",
           type: "default",
           url: "",
@@ -229,7 +235,7 @@ describe("Security Tests", () => {
           arrayBuffer: async () => new ArrayBuffer(0),
           blob: async () => new Blob(),
           formData: async () => new FormData(),
-          text: async () => "",
+          text: async () => JSON.stringify(errorBody),
           clone: function () {
             return this
           },
@@ -253,18 +259,19 @@ describe("Security Tests", () => {
 
   describe("Validation Errors", () => {
     test("should handle validation errors properly", async () => {
+      const errorBody = {
+        object: "error",
+        status: 400,
+        code: APIErrorCode.ValidationError,
+        message: "body failed validation",
+      }
       const mockFetch = jest.fn(
         async () =>
           ({
             ok: false,
             status: 400,
             headers: new Map([["content-type", "application/json"]]),
-            json: async () => ({
-              object: "error",
-              status: 400,
-              code: APIErrorCode.ValidationError,
-              message: "body failed validation",
-            }),
+            json: async () => errorBody,
             statusText: "Bad Request",
             type: "default",
             url: "",
@@ -274,7 +281,7 @@ describe("Security Tests", () => {
             arrayBuffer: async () => new ArrayBuffer(0),
             blob: async () => new Blob(),
             formData: async () => new FormData(),
-            text: async () => "",
+            text: async () => JSON.stringify(errorBody),
             clone: function () {
               return this
             },
@@ -301,18 +308,19 @@ describe("Security Tests", () => {
     })
 
     test("should provide detailed validation error messages", async () => {
+      const errorBody = {
+        object: "error",
+        status: 400,
+        code: APIErrorCode.ValidationError,
+        message: "body.parent.database_id should be a valid uuid",
+      }
       const mockFetch = jest.fn(
         async () =>
           ({
             ok: false,
             status: 400,
             headers: new Map([["content-type", "application/json"]]),
-            json: async () => ({
-              object: "error",
-              status: 400,
-              code: APIErrorCode.ValidationError,
-              message: "body.parent.database_id should be a valid uuid",
-            }),
+            json: async () => errorBody,
             statusText: "Bad Request",
             type: "default",
             url: "",
@@ -322,7 +330,7 @@ describe("Security Tests", () => {
             arrayBuffer: async () => new ArrayBuffer(0),
             blob: async () => new Blob(),
             formData: async () => new FormData(),
-            text: async () => "",
+            text: async () => JSON.stringify(errorBody),
             clone: function () {
               return this
             },
@@ -366,15 +374,17 @@ describe("Security Tests", () => {
 
   describe("Injection Attack Prevention", () => {
     test("should handle SQL-like injection attempts safely", async () => {
+      const responseBody = {
+        object: "list",
+        results: [],
+        has_more: false,
+      }
       const mockFetch = jest.fn(async () => ({
         ok: true,
         status: 200,
         headers: new Map([["content-type", "application/json"]]),
-        json: async () => ({
-          object: "list",
-          results: [],
-          has_more: false,
-        }),
+        json: async () => responseBody,
+        text: async () => JSON.stringify(responseBody),
       })) as unknown as typeof fetch
 
       const client = new Client({
@@ -390,15 +400,17 @@ describe("Security Tests", () => {
     })
 
     test("should handle script injection attempts in search", async () => {
+      const responseBody = {
+        object: "list",
+        results: [],
+        has_more: false,
+      }
       const mockFetch = jest.fn(async () => ({
         ok: true,
         status: 200,
         headers: new Map([["content-type", "application/json"]]),
-        json: async () => ({
-          object: "list",
-          results: [],
-          has_more: false,
-        }),
+        json: async () => responseBody,
+        text: async () => JSON.stringify(responseBody),
       })) as unknown as typeof fetch
 
       const client = new Client({
@@ -414,18 +426,19 @@ describe("Security Tests", () => {
 
   describe("Error Message Safety", () => {
     test("should not leak internal paths in errors", async () => {
+      const errorBody = {
+        object: "error",
+        status: 500,
+        code: APIErrorCode.InternalServerError,
+        message: "Internal server error",
+      }
       const mockFetch = jest.fn(
         async () =>
           ({
             ok: false,
             status: 500,
             headers: new Map([["content-type", "application/json"]]),
-            json: async () => ({
-              object: "error",
-              status: 500,
-              code: APIErrorCode.InternalServerError,
-              message: "Internal server error",
-            }),
+            json: async () => errorBody,
             statusText: "Internal Server Error",
             type: "default",
             url: "",
@@ -435,7 +448,7 @@ describe("Security Tests", () => {
             arrayBuffer: async () => new ArrayBuffer(0),
             blob: async () => new Blob(),
             formData: async () => new FormData(),
-            text: async () => "",
+            text: async () => JSON.stringify(errorBody),
             clone: function () {
               return this
             },

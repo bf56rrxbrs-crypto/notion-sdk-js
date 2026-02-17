@@ -200,6 +200,7 @@ The SDK is configured with GitHub Actions CI that:
 - Validates on push to main and all pull requests
 
 **CI Status:**
+
 - ✅ Core CI workflow (build, lint, primary test suite) is passing on
   Node.js 18.x, 19.x, 20.x, and 22.x
 - ⚠️ Extended stress and security test suites currently achieve a 92%

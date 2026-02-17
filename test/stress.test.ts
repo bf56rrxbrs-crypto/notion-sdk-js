@@ -47,6 +47,12 @@ describe("Stress Tests", () => {
 
   describe("Rate Limiting Behavior", () => {
     test("should handle rate limit responses correctly", async () => {
+      const errorBody = {
+        object: "error",
+        status: 429,
+        code: "rate_limited",
+        message: "Rate limited",
+      }
       const mockFetch = jest.fn(async () => ({
         ok: false,
         status: 429,
@@ -54,12 +60,8 @@ describe("Stress Tests", () => {
           ["content-type", "application/json"],
           ["retry-after", "1"],
         ]),
-        json: async () => ({
-          object: "error",
-          status: 429,
-          code: "rate_limited",
-          message: "Rate limited",
-        }),
+        json: async () => errorBody,
+        text: async () => JSON.stringify(errorBody),
       })) as unknown as typeof fetch
 
       const client = new Client({
@@ -87,19 +89,20 @@ describe("Stress Tests", () => {
       const mockFetch = jest.fn(async () => {
         attemptCount++
         if (attemptCount <= 2) {
+          const errorBody = {
+            object: "error",
+            status: 429,
+            code: "rate_limited",
+            message: "Rate limited",
+          }
+          const headers = new Headers()
+          headers.set("content-type", "application/json")
+          headers.set("retry-after", "1") // 1 second, per HTTP spec (must be whole seconds)
           return {
             ok: false,
             status: 429,
-            headers: new Map([
-              ["content-type", "application/json"],
-              ["retry-after", "0.1"],
-            ]),
-            json: async () => ({
-              object: "error",
-              status: 429,
-              code: "rate_limited",
-              message: "Rate limited",
-            }),
+            headers,
+            json: async () => errorBody,
             statusText: "Too Many Requests",
             type: "default",
             url: "",
@@ -109,21 +112,24 @@ describe("Stress Tests", () => {
             arrayBuffer: async () => new ArrayBuffer(0),
             blob: async () => new Blob(),
             formData: async () => new FormData(),
-            text: async () => "",
+            text: async () => JSON.stringify(errorBody),
             clone: function () {
               return this
             },
           } as unknown as Response
         }
+        const successBody = {
+          object: "list",
+          results: [],
+          has_more: false,
+        }
+        const headers = new Headers()
+        headers.set("content-type", "application/json")
         return {
           ok: true,
           status: 200,
-          headers: new Map([["content-type", "application/json"]]),
-          json: async () => ({
-            object: "list",
-            results: [],
-            has_more: false,
-          }),
+          headers,
+          json: async () => successBody,
           statusText: "OK",
           type: "default",
           url: "",
@@ -133,7 +139,7 @@ describe("Stress Tests", () => {
           arrayBuffer: async () => new ArrayBuffer(0),
           blob: async () => new Blob(),
           formData: async () => new FormData(),
-          text: async () => "",
+          text: async () => JSON.stringify(successBody),
           clone: function () {
             return this
           },
@@ -154,8 +160,8 @@ describe("Stress Tests", () => {
       await client.users.list({ page_size: 10 })
       const duration = Date.now() - startTime
 
-      // Should have waited for retry-after delays
-      expect(duration).toBeGreaterThan(150)
+      // Should have waited for retry-after delays (2 retries x 1 second each)
+      expect(duration).toBeGreaterThan(1800) // At least 1.8 seconds
       expect(mockFetch).toHaveBeenCalledTimes(3)
     })
   })
@@ -229,15 +235,17 @@ describe("Stress Tests", () => {
         name: `User ${i}`,
       }))
 
+      const responseBody = {
+        object: "list",
+        results: largeResults,
+        has_more: false,
+      }
       const mockFetch = jest.fn(async () => ({
         ok: true,
         status: 200,
         headers: new Map([["content-type", "application/json"]]),
-        json: async () => ({
-          object: "list",
-          results: largeResults,
-          has_more: false,
-        }),
+        json: async () => responseBody,
+        text: async () => JSON.stringify(responseBody),
       })) as unknown as typeof fetch
 
       const client = new Client({
@@ -286,7 +294,7 @@ describe("Stress Tests", () => {
             arrayBuffer: async () => new ArrayBuffer(0),
             blob: async () => new Blob(),
             formData: async () => new FormData(),
-            text: async () => "",
+            text: async () => JSON.stringify(nestedStructure),
             clone: function () {
               return this
             },
@@ -310,16 +318,17 @@ describe("Stress Tests", () => {
       const mockFetch = jest.fn(async () => {
         attemptCount++
         if (attemptCount === 1) {
+          const errorBody = {
+            object: "error",
+            status: 500,
+            code: "internal_server_error",
+            message: "Internal error",
+          }
           return {
             ok: false,
             status: 500,
             headers: new Map([["content-type", "application/json"]]),
-            json: async () => ({
-              object: "error",
-              status: 500,
-              code: "internal_server_error",
-              message: "Internal error",
-            }),
+            json: async () => errorBody,
             statusText: "Internal Server Error",
             type: "default",
             url: "",
@@ -329,21 +338,22 @@ describe("Stress Tests", () => {
             arrayBuffer: async () => new ArrayBuffer(0),
             blob: async () => new Blob(),
             formData: async () => new FormData(),
-            text: async () => "",
+            text: async () => JSON.stringify(errorBody),
             clone: function () {
               return this
             },
           } as unknown as Response
         }
+        const successBody = {
+          object: "list",
+          results: [],
+          has_more: false,
+        }
         return {
           ok: true,
           status: 200,
           headers: new Map([["content-type", "application/json"]]),
-          json: async () => ({
-            object: "list",
-            results: [],
-            has_more: false,
-          }),
+          json: async () => successBody,
           statusText: "OK",
           type: "default",
           url: "",
@@ -353,7 +363,7 @@ describe("Stress Tests", () => {
           arrayBuffer: async () => new ArrayBuffer(0),
           blob: async () => new Blob(),
           formData: async () => new FormData(),
-          text: async () => "",
+          text: async () => JSON.stringify(successBody),
           clone: function () {
             return this
           },
@@ -376,18 +386,19 @@ describe("Stress Tests", () => {
     })
 
     test("should fail after max retries", async () => {
+      const errorBody = {
+        object: "error",
+        status: 500,
+        code: "internal_server_error",
+        message: "Internal error",
+      }
       const mockFetch = jest.fn(
         async () =>
           ({
             ok: false,
             status: 500,
             headers: new Map([["content-type", "application/json"]]),
-            json: async () => ({
-              object: "error",
-              status: 500,
-              code: "internal_server_error",
-              message: "Internal error",
-            }),
+            json: async () => errorBody,
             statusText: "Internal Server Error",
             type: "default",
             url: "",
@@ -397,7 +408,7 @@ describe("Stress Tests", () => {
             arrayBuffer: async () => new ArrayBuffer(0),
             blob: async () => new Blob(),
             formData: async () => new FormData(),
-            text: async () => "",
+            text: async () => JSON.stringify(errorBody),
             clone: function () {
               return this
             },
@@ -421,15 +432,17 @@ describe("Stress Tests", () => {
 
   describe("Resource Exhaustion", () => {
     test("should handle many sequential requests", async () => {
+      const responseBody = {
+        object: "list",
+        results: [],
+        has_more: false,
+      }
       const mockFetch = jest.fn(async () => ({
         ok: true,
         status: 200,
         headers: new Map([["content-type", "application/json"]]),
-        json: async () => ({
-          object: "list",
-          results: [],
-          has_more: false,
-        }),
+        json: async () => responseBody,
+        text: async () => JSON.stringify(responseBody),
       })) as unknown as typeof fetch
 
       const client = new Client({
@@ -469,17 +482,18 @@ describe("Stress Tests", () => {
 
   describe("Edge Cases", () => {
     test("should handle empty responses", async () => {
+      const responseBody = {
+        object: "list",
+        results: [],
+        has_more: false,
+      }
       const mockFetch = jest.fn(
         async () =>
           ({
             ok: true,
             status: 200,
             headers: new Map([["content-type", "application/json"]]),
-            json: async () => ({
-              object: "list",
-              results: [],
-              has_more: false,
-            }),
+            json: async () => responseBody,
             statusText: "OK",
             type: "default",
             url: "",
@@ -489,7 +503,7 @@ describe("Stress Tests", () => {
             arrayBuffer: async () => new ArrayBuffer(0),
             blob: async () => new Blob(),
             formData: async () => new FormData(),
-            text: async () => "",
+            text: async () => JSON.stringify(responseBody),
             clone: function () {
               return this
             },
@@ -506,17 +520,18 @@ describe("Stress Tests", () => {
     })
 
     test("should handle special characters in parameters", async () => {
+      const responseBody = {
+        object: "list",
+        results: [],
+        has_more: false,
+      }
       const mockFetch = jest.fn(
         async () =>
           ({
             ok: true,
             status: 200,
             headers: new Map([["content-type", "application/json"]]),
-            json: async () => ({
-              object: "list",
-              results: [],
-              has_more: false,
-            }),
+            json: async () => responseBody,
             statusText: "OK",
             type: "default",
             url: "",
@@ -526,7 +541,7 @@ describe("Stress Tests", () => {
             arrayBuffer: async () => new ArrayBuffer(0),
             blob: async () => new Blob(),
             formData: async () => new FormData(),
-            text: async () => "",
+            text: async () => JSON.stringify(responseBody),
             clone: function () {
               return this
             },
