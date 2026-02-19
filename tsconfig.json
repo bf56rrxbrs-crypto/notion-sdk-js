@@ -8,8 +8,8 @@
     "module": "commonjs",
     // "esModuleInterop": true,
 
-    // Overrides default in order to remove "dom" because this package shouldn't assume the presence of browser APIs
-    "lib": ["ES2019"],
+    // Include DOM libs to type built-in fetch/Blob with iterable helpers
+    "lib": ["ES2019", "DOM", "DOM.Iterable"],
 
     // Emit location
     "outDir": "build",
@@ -37,6 +37,8 @@
     "noPropertyAccessFromIndexSignature": true,
     "forceConsistentCasingInFileNames": true
   },
+
+  "types": ["node", "jest"],
 
   "include": ["src/**/*", "test/**/*"]
 }

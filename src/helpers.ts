@@ -268,6 +268,10 @@ export function isMentionRichTextItemResponse(
   return richText.type === "mention"
 }
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const COMPACT_UUID_REGEX = /^[0-9a-f]{32}$/i
+
 /**
  * Extracts a Notion ID from a Notion URL or returns the input if it's already a valid ID.
  *
@@ -295,15 +299,12 @@ export function extractNotionId(urlOrId: string): string | null {
   const trimmed = urlOrId.trim()
 
   // Check if it's already a properly formatted UUID
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (uuidRegex.test(trimmed)) {
+  if (UUID_REGEX.test(trimmed)) {
     return trimmed.toLowerCase()
   }
 
   // Check if it's a compact UUID (32 chars, no hyphens)
-  const compactUuidRegex = /^[0-9a-f]{32}$/i
-  if (compactUuidRegex.test(trimmed)) {
+  if (COMPACT_UUID_REGEX.test(trimmed)) {
     return formatUuid(trimmed)
   }
 
@@ -379,19 +380,23 @@ export function extractBlockId(urlWithBlock: string): string | null {
 }
 
 /**
- * Validates if a string is a valid Notion UUID format.
+ * Validates if a value is a valid Notion UUID format.
+ * Accepts `unknown` input and performs runtime type narrowing.
+ * Trims whitespace before validation. Supports both standard
+ * dashed UUIDs and compact 32-character hex formats.
  *
- * @param id The string to validate as a Notion ID
- * @returns `true` if the string is a valid UUID format
+ * @param id The value to validate as a Notion ID
+ * @returns `true` if the value is a valid UUID format
  *
  * @example
  * ```typescript
  * isValidNotionId('12345678-1234-1234-1234-123456789abc') // true
  * isValidNotionId('abc123def456789012345678901234ab') // true (compact format)
  * isValidNotionId('invalid-id') // false
+ * isValidNotionId(null) // false
  * ```
  */
-export function isValidNotionId(id: string): boolean {
+export function isValidNotionId(id: unknown): boolean {
   if (!id || typeof id !== "string") {
     return false
   }
@@ -399,15 +404,12 @@ export function isValidNotionId(id: string): boolean {
   const trimmed = id.trim()
 
   // Check standard UUID format
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (uuidRegex.test(trimmed)) {
+  if (UUID_REGEX.test(trimmed)) {
     return true
   }
 
   // Check compact UUID format (32 chars, no hyphens)
-  const compactUuidRegex = /^[0-9a-f]{32}$/i
-  return compactUuidRegex.test(trimmed)
+  return COMPACT_UUID_REGEX.test(trimmed)
 }
 
 /**
@@ -460,7 +462,7 @@ export function richTextToMarkdown(
       if (item.type === "equation") {
         return `$${text}$`
       } else if (item.type === "mention") {
-        return `@${text}`
+        return text
       }
 
       // Apply annotations in order: bold/italic/strikethrough/underline first, then code
@@ -559,7 +561,7 @@ export function getPageProperty(
     case "number":
       return "number" in property ? property.number : null
     case "select":
-      return "select" in property ? property.select?.name : null
+      return "select" in property ? (property.select?.name ?? null) : null
     case "multi_select":
       return "multi_select" in property
         ? property.multi_select.map(item => item.name)
@@ -593,13 +595,15 @@ export function getPageProperty(
     case "last_edited_by":
       return "last_edited_by" in property ? property.last_edited_by : null
     case "status":
-      return "status" in property ? property.status?.name : null
+      return "status" in property ? (property.status?.name ?? null) : null
     case "unique_id":
       return "unique_id" in property ? property.unique_id : null
     case "verification":
       return "verification" in property ? property.verification : null
     case "button":
       return "button" in property ? property.button : null
+    case "place":
+      return "place" in property ? property.place : null
     default:
       return null
   }

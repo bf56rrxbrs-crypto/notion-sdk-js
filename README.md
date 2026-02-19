@@ -351,7 +351,7 @@ console.log(title) // "My Page Title"
 
 ##### `getPageProperty(page, propertyName)`
 
-Safely extracts a property value from a page by property name. Handles all property types and returns the appropriate value type for each.
+Safely extracts a property value from a page by property name. Normalizes some common types (e.g., `select` to name string, `multi_select` to array of names) and returns the raw value for others. In TypeScript, the return type is `unknown | null`, so callers will need to inspect or narrow the value themselves.
 
 ```javascript
 const page = await notion.pages.retrieve({ page_id: pageId })
@@ -413,11 +413,14 @@ Convenience wrappers around `extractNotionId` for specific resource types.
 
 ##### `isValidNotionId(id)`
 
-Validates whether a string is a valid Notion UUID format.
+Validates whether a value is a valid Notion UUID format. Accepts `unknown` input (not just strings), trims whitespace, and supports both standard dashed UUIDs and compact 32-character hex formats.
 
 ```javascript
 isValidNotionId("12345678-1234-1234-1234-123456789abc") // true
+isValidNotionId("12345678123412341234123456789abc") // true (compact)
+isValidNotionId("  12345678-1234-1234-1234-123456789abc  ") // true (trimmed)
 isValidNotionId("invalid-id") // false
+isValidNotionId(null) // false
 ```
 
 ### Custom requests
